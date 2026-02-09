@@ -77,7 +77,7 @@ export function Navbar() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2 group">
           <div className="relative flex h-8 w-8 items-center justify-center transition-all group-hover:drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]">
-            <img src="/logo.svg" alt="Aegis Logo" className="h-8 w-8 object-contain" />
+            <img src="/aegis.png" alt="Aegis Logo" className="h-8 w-8 object-contain" />
           </div>
           <span className="text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
             AEGIS<span className="text-primary">CTF</span>

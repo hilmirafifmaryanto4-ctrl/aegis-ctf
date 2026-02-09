@@ -64,8 +64,8 @@ export function LoginForm() {
   return (
     <div className="w-full max-w-md space-y-8 rounded-2xl border border-white/10 bg-black/50 p-8 backdrop-blur-md shadow-[0_0_40px_rgba(0,0,0,0.5)]">
       <div className="text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-foreground">Welcome Back</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Sign in to your account</p>
+        <h2 className="text-3xl font-bold tracking-tight text-white">Sign In</h2>
+        <p className="mt-2 text-sm text-muted-foreground">Welcome back, challenger</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-6">
