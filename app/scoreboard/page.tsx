@@ -6,9 +6,20 @@ import { Navbar } from "@/components/layout/navbar"
 import { Trophy, Medal, User, Lock } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from "recharts"
 
 export default function ScoreboardPage() {
   const [leaderboard, setLeaderboard] = useState<any[]>([])
+  const [chartData, setChartData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [authChecking, setAuthChecking] = useState(true)
@@ -33,6 +44,7 @@ export default function ScoreboardPage() {
     const { data: solves, error } = await supabase
       .from('solves')
       .select(`
+        created_at,
         user_id,
         challenges (
           points
@@ -55,13 +67,44 @@ export default function ScoreboardPage() {
       profileMap[p.id] = p.username || "Anonymous"
     })
 
-    // Calculate scores
+    // Calculate scores and chart data
     const userScores: Record<string, number> = {}
+    const solvesByTime: any[] = []
+
+    solves?.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+    // Initialize chart data with 0 scores for top users (will refine logic)
+    // Simplified chart logic: Cumulative score over time
+    // Group solves by hour/day for chart
     
     solves?.forEach((solve: any) => {
       const uid = solve.user_id
       const points = solve.challenges?.points || 0
       userScores[uid] = (userScores[uid] || 0) + points
+    })
+
+    // Prepare chart data (Cumulative scores of top 5 users over time)
+    // 1. Get Top 5 Users
+    const topUsers = Object.entries(userScores)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([id]) => id)
+
+    // 2. Build cumulative timeline
+    const timeline: any[] = []
+    const currentScores: Record<string, number> = {}
+    topUsers.forEach(id => currentScores[id] = 0)
+
+    solves?.forEach((solve: any) => {
+      if (topUsers.includes(solve.user_id)) {
+        currentScores[solve.user_id] += (solve.challenges?.points || 0)
+        
+        timeline.push({
+          time: new Date(solve.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          timestamp: new Date(solve.created_at).getTime(),
+          ...currentScores
+        })
+      }
     })
 
     // Convert to array and sort
@@ -74,6 +117,7 @@ export default function ScoreboardPage() {
       .sort((a, b) => b.score - a.score)
     
     setLeaderboard(sortedLeaderboard)
+    setChartData(timeline)
     setLoading(false)
   }
 
@@ -147,6 +191,38 @@ export default function ScoreboardPage() {
           </h1>
           <p className="text-muted-foreground">Top hackers of Aegis CTF</p>
         </div>
+
+        {/* Score History Chart */}
+        {!loading && leaderboard.length > 0 && (
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <h3 className="text-lg font-bold text-white mb-4">Score History (Top 5)</h3>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                  <XAxis dataKey="time" stroke="#666" />
+                  <YAxis stroke="#666" />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#000', border: '1px solid #333' }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Legend />
+                  {leaderboard.slice(0, 5).map((user, index) => (
+                    <Line 
+                      key={user.id}
+                      type="stepAfter" 
+                      dataKey={user.id} 
+                      name={user.username}
+                      stroke={`hsl(${index * 60}, 70%, 50%)`} 
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
 
         <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
           <div className="overflow-x-auto">

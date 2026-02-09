@@ -19,6 +19,7 @@ export default function AdminPage() {
     description: "",
     points: 100,
     flag: "",
+    files: [] as string[] // Placeholder for file URLs
   })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
@@ -84,6 +85,7 @@ export default function AdminPage() {
         description: "",
         points: 100,
         flag: "",
+        files: []
       })
       fetchChallenges()
     }
@@ -253,8 +255,19 @@ export default function AdminPage() {
                       value={formData.description}
                       onChange={e => setFormData({...formData, description: e.target.value})}
                       className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-white focus:border-primary focus:outline-none"
-                      placeholder="Describe the challenge..."
+                      placeholder="Describe the challenge... Example: 'Analyze the attached PCAP file using Wireshark to find the flag.'"
                     />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white">File URL (Optional)</label>
+                    <input 
+                      value={formData.files[0] || ""}
+                      onChange={e => setFormData({...formData, files: e.target.value ? [e.target.value] : []})}
+                      className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-white focus:border-primary focus:outline-none"
+                      placeholder="https://example.com/challenge.pcap"
+                    />
+                    <p className="text-xs text-muted-foreground">Paste a direct link to the challenge file (e.g. Google Drive, Dropbox, or direct host).</p>
                   </div>
 
                   <div className="space-y-2">

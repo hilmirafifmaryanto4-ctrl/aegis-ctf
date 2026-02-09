@@ -129,10 +129,10 @@ export default function ProfilePage() {
             <div className="flex gap-2">
               {isEditing ? (
                 <>
-                  <Button onClick={handleUpdateProfile} className="bg-primary text-black hover:bg-primary/90">
+                  <Button onClick={handleUpdateProfile} variant="primary" className="text-black hover:bg-primary/90 shadow-[0_0_15px_rgba(6,182,212,0.5)] border border-primary">
                     Save
                   </Button>
-                  <Button variant="ghost" onClick={() => setIsEditing(false)}>
+                  <Button variant="ghost" onClick={() => setIsEditing(false)} className="text-white hover:bg-white/10">
                     Cancel
                   </Button>
                 </>
