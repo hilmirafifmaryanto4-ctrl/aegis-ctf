@@ -73,7 +73,8 @@ export default function ChallengesPage() {
     }
   }
 
-  const categories = ["Web", "Crypto", "Pwn", "Forensics", "Reverse", "Misc"]
+  const categories = ["All", "Web", "Crypto", "Pwn", "Forensics", "Reverse", "Misc"]
+  const [activeCategory, setActiveCategory] = useState("All")
 
   const handleSubmitFlag = async () => {
     if (!selectedChallenge || !flagInput) return
@@ -151,47 +152,65 @@ export default function ChallengesPage() {
     <div className="min-h-screen bg-black">
       <Navbar />
       <div className="pt-24 pb-12 px-4 md:px-6">
-        <div className="container mx-auto space-y-12">
-        <h1 className="text-4xl font-bold text-white text-center">Challenges</h1>
+        <div className="container mx-auto space-y-8">
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl font-bold text-white">Challenges</h1>
+          <p className="text-muted-foreground">Select a category to view challenges</p>
+        </div>
+
+        {/* Category Tabs */}
+        <div className="flex flex-wrap justify-center gap-2">
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
+                activeCategory === cat 
+                  ? "bg-primary text-black font-bold shadow-[0_0_15px_rgba(6,182,212,0.5)]" 
+                  : "bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
 
         {loading ? (
-          <div className="text-white text-center">Loading challenges...</div>
+          <div className="text-white text-center py-12">Loading challenges...</div>
         ) : challenges.length === 0 ? (
           <div className="text-center text-muted-foreground py-12">
             <p className="text-xl">No challenges available yet.</p>
             <p className="text-sm mt-2">Check back later or contact the admin.</p>
           </div>
         ) : (
-          categories.map(category => {
-            const catChallenges = challenges.filter(c => c.category === category)
-            if (catChallenges.length === 0) return null
-
-            return (
-              <div key={category} className="space-y-4">
-                <h2 className="text-2xl font-bold text-primary border-b border-primary/20 pb-2">{category}</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {catChallenges.map(challenge => (
-                    <button
-                      key={challenge.id}
-                      onClick={() => {
-                        setSelectedChallenge(challenge)
-                        setFlagInput("")
-                        setSubmitStatus("idle")
-                        fetchHints(challenge.id)
-                      }}
-                      className="p-6 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-primary/50 transition-all text-left group"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="text-lg font-bold text-white group-hover:text-primary">{challenge.points}</span>
-                        <Flag className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
-                      </div>
-                      <h3 className="font-medium text-white truncate">{challenge.title}</h3>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )
-          })
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {challenges
+              .filter(c => activeCategory === "All" || c.category === activeCategory)
+              .map(challenge => (
+                <button
+                  key={challenge.id}
+                  onClick={() => {
+                    setSelectedChallenge(challenge)
+                    setFlagInput("")
+                    setSubmitStatus("idle")
+                    fetchHints(challenge.id)
+                  }}
+                  className="p-6 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-primary/50 transition-all text-left group flex flex-col h-full"
+                >
+                  <div className="flex justify-between items-start mb-4 w-full">
+                    <span className="text-xs px-2 py-1 rounded bg-white/10 text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary transition-colors">
+                      {challenge.category}
+                    </span>
+                    <span className="text-lg font-bold text-white group-hover:text-primary">{challenge.points}</span>
+                  </div>
+                  <h3 className="font-bold text-xl text-white mb-2 group-hover:text-primary transition-colors">{challenge.title}</h3>
+                  <div className="mt-auto pt-4 flex justify-between items-center w-full">
+                     {/* Solved indicator could go here */}
+                     <span className="text-xs text-muted-foreground">View Challenge &rarr;</span>
+                  </div>
+                </button>
+            ))}
+          </div>
         )}
 
         {/* Challenge Modal */}

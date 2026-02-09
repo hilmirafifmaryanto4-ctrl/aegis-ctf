@@ -3,15 +3,22 @@
 import { useState, useEffect, useCallback } from "react"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
-import { Shield, Plus, Trash2, Users, List, Trophy, Upload, X, FileText, Megaphone, Lightbulb } from "lucide-react"
+import { Shield, Plus, Trash2, Users, List, Trophy, Upload, X, FileText, Megaphone, Lightbulb, Activity, Eye, EyeOff, Flag } from "lucide-react"
 import { Navbar } from "@/components/layout/navbar"
 
 export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false)
-  const [activeTab, setActiveTab] = useState("challenges")
+  const [activeTab, setActiveTab] = useState("dashboard")
   const [challenges, setChallenges] = useState<any[]>([])
   const [users, setUsers] = useState<any[]>([])
   const [announcements, setAnnouncements] = useState<any[]>([])
+  const [solves, setSolves] = useState<any[]>([])
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalChallenges: 0,
+    totalSolves: 0,
+    visibleChallenges: 0
+  })
   
   // Form State
   const [formData, setFormData] = useState({
@@ -22,6 +29,7 @@ export default function AdminPage() {
     flag: "",
     files: [] as string[],
     type: "standard",
+    state: "visible",
     initial_points: 100,
     minimum_points: 100,
     decay: 0,
@@ -94,10 +102,22 @@ export default function AdminPage() {
         fetchChallenges()
         fetchUsers()
         fetchAnnouncements()
+        fetchSolves()
       }
     }
     checkAdmin()
   }, [])
+
+  useEffect(() => {
+    if (challenges.length > 0 && users.length > 0 && solves.length > 0) {
+      setStats({
+        totalUsers: users.length,
+        totalChallenges: challenges.length,
+        totalSolves: solves.length,
+        visibleChallenges: challenges.filter(c => c.state === 'visible').length
+      })
+    }
+  }, [challenges, users, solves])
 
   const fetchChallenges = async () => {
     const { data } = await supabase.from('challenges').select('*').order('created_at', { ascending: false })
@@ -114,6 +134,14 @@ export default function AdminPage() {
     if (data) setAnnouncements(data)
   }
 
+  const fetchSolves = async () => {
+    const { data } = await supabase
+      .from('solves')
+      .select('*, profiles:user_id(username), challenges:challenge_id(title)')
+      .order('created_at', { ascending: false })
+    if (data) setSolves(data)
+  }
+
   const handleDeleteChallenge = async (id: string) => {
     if (!confirm("Are you sure you want to delete this challenge?")) return
     const { error } = await supabase.from('challenges').delete().eq('id', id)
@@ -122,6 +150,19 @@ export default function AdminPage() {
     } else {
       fetchChallenges()
     }
+  }
+
+  const handleDeleteSolve = async (id: string) => {
+    if (!confirm("Revoke this solve? Points will be deducted.")) return
+    const { error } = await supabase.from('solves').delete().eq('id', id)
+    if (error) alert("Error: " + error.message)
+    else fetchSolves()
+  }
+
+  const handleToggleVisibility = async (id: string, currentState: string) => {
+    const newState = currentState === 'visible' ? 'hidden' : 'visible'
+    const { error } = await supabase.from('challenges').update({ state: newState }).eq('id', id)
+    if (!error) fetchChallenges()
   }
 
   const handleDeleteAnnouncement = async (id: string) => {
@@ -158,6 +199,7 @@ export default function AdminPage() {
       flag: formData.flag,
       files: formData.files,
       type: formData.type,
+      state: formData.state,
       initial_points: formData.initial_points,
       minimum_points: formData.minimum_points,
       decay: formData.decay
@@ -185,6 +227,7 @@ export default function AdminPage() {
         flag: "",
         files: [],
         type: "standard",
+        state: "visible",
         initial_points: 100,
         minimum_points: 100,
         decay: 0,
@@ -227,10 +270,23 @@ export default function AdminPage() {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-4 border-b border-white/10">
+          <div className="flex gap-4 border-b border-white/10 overflow-x-auto">
+            <button
+              onClick={() => setActiveTab("dashboard")}
+              className={`pb-4 px-4 text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === "dashboard" 
+                  ? "border-b-2 border-primary text-primary" 
+                  : "text-muted-foreground hover:text-white"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                Overview
+              </div>
+            </button>
             <button
               onClick={() => setActiveTab("challenges")}
-              className={`pb-4 px-4 text-sm font-medium transition-colors ${
+              className={`pb-4 px-4 text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === "challenges" 
                   ? "border-b-2 border-primary text-primary" 
                   : "text-muted-foreground hover:text-white"
@@ -238,12 +294,12 @@ export default function AdminPage() {
             >
               <div className="flex items-center gap-2">
                 <List className="h-4 w-4" />
-                Manage Challenges
+                Challenges
               </div>
             </button>
             <button
               onClick={() => setActiveTab("create")}
-              className={`pb-4 px-4 text-sm font-medium transition-colors ${
+              className={`pb-4 px-4 text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === "create" 
                   ? "border-b-2 border-primary text-primary" 
                   : "text-muted-foreground hover:text-white"
@@ -251,12 +307,25 @@ export default function AdminPage() {
             >
               <div className="flex items-center gap-2">
                 <Plus className="h-4 w-4" />
-                Create Challenge
+                Create
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab("solves")}
+              className={`pb-4 px-4 text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === "solves" 
+                  ? "border-b-2 border-primary text-primary" 
+                  : "text-muted-foreground hover:text-white"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Flag className="h-4 w-4" />
+                Solves
               </div>
             </button>
             <button
               onClick={() => setActiveTab("users")}
-              className={`pb-4 px-4 text-sm font-medium transition-colors ${
+              className={`pb-4 px-4 text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === "users" 
                   ? "border-b-2 border-primary text-primary" 
                   : "text-muted-foreground hover:text-white"
@@ -264,12 +333,12 @@ export default function AdminPage() {
             >
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                Users ({users.length})
+                Users
               </div>
             </button>
             <button
               onClick={() => setActiveTab("announcements")}
-              className={`pb-4 px-4 text-sm font-medium transition-colors ${
+              className={`pb-4 px-4 text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === "announcements" 
                   ? "border-b-2 border-primary text-primary" 
                   : "text-muted-foreground hover:text-white"
@@ -284,6 +353,32 @@ export default function AdminPage() {
 
           {/* Content */}
           <div className="min-h-[400px]">
+            {activeTab === "dashboard" && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="p-6 rounded-xl border border-white/10 bg-white/5">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">Total Users</span>
+                    <Users className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <div className="text-3xl font-bold text-white">{stats.totalUsers}</div>
+                </div>
+                <div className="p-6 rounded-xl border border-white/10 bg-white/5">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">Challenges</span>
+                    <List className="h-4 w-4 text-yellow-500" />
+                  </div>
+                  <div className="text-3xl font-bold text-white">{stats.totalChallenges} <span className="text-sm text-muted-foreground font-normal">({stats.visibleChallenges} visible)</span></div>
+                </div>
+                <div className="p-6 rounded-xl border border-white/10 bg-white/5">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">Total Solves</span>
+                    <Flag className="h-4 w-4 text-green-500" />
+                  </div>
+                  <div className="text-3xl font-bold text-white">{stats.totalSolves}</div>
+                </div>
+              </div>
+            )}
+
             {activeTab === "challenges" && (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -291,10 +386,13 @@ export default function AdminPage() {
                     <div className="col-span-full text-center py-12 text-muted-foreground">No challenges found.</div>
                   ) : (
                     challenges.map((challenge) => (
-                      <div key={challenge.id} className="rounded-xl border border-white/10 bg-white/5 p-6 space-y-4">
+                      <div key={challenge.id} className={`rounded-xl border ${challenge.state === 'hidden' ? 'border-red-500/30 bg-red-950/10' : 'border-white/10 bg-white/5'} p-6 space-y-4`}>
                         <div className="flex justify-between items-start">
                           <div>
-                            <h3 className="text-lg font-bold text-white">{challenge.title}</h3>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-lg font-bold text-white">{challenge.title}</h3>
+                              {challenge.state === 'hidden' && <EyeOff className="h-4 w-4 text-muted-foreground" />}
+                            </div>
                             <span className="text-xs px-2 py-0.5 rounded bg-primary/20 text-primary mt-1 inline-block">
                               {challenge.category}
                             </span>
@@ -303,6 +401,14 @@ export default function AdminPage() {
                         </div>
                         <p className="text-sm text-muted-foreground line-clamp-2">{challenge.description}</p>
                         <div className="pt-4 border-t border-white/10 flex justify-end gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleToggleVisibility(challenge.id, challenge.state)}
+                            title={challenge.state === 'visible' ? "Hide Challenge" : "Show Challenge"}
+                          >
+                            {challenge.state === 'visible' ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                          </Button>
                           <Button 
                             variant="destructive" 
                             size="sm"
@@ -351,6 +457,18 @@ export default function AdminPage() {
                         <option value="Misc">Miscellaneous</option>
                       </select>
                     </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-white">Visibility</label>
+                      <select 
+                        value={formData.state}
+                        onChange={e => setFormData({...formData, state: e.target.value})}
+                        className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-white focus:border-primary focus:outline-none"
+                      >
+                        <option value="visible">Visible (Public)</option>
+                        <option value="hidden">Hidden (Draft)</option>
+                      </select>
+                    </div>
+                  </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-white">Points Type</label>
                     <div className="flex gap-4">
@@ -557,6 +675,45 @@ export default function AdminPage() {
                     {loading ? "Creating..." : "Create Challenge"}
                   </Button>
                 </form>
+              </div>
+            )}
+
+            {activeTab === "solves" && (
+              <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+                <table className="w-full text-left">
+                  <thead className="bg-white/10 text-white">
+                    <tr>
+                      <th className="p-4">Time</th>
+                      <th className="p-4">User</th>
+                      <th className="p-4">Challenge</th>
+                      <th className="p-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/10">
+                    {solves.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="p-8 text-center text-muted-foreground">No solves yet.</td>
+                      </tr>
+                    ) : (
+                      solves.map((solve) => (
+                        <tr key={solve.id} className="text-muted-foreground hover:bg-white/5">
+                          <td className="p-4">{new Date(solve.created_at).toLocaleString()}</td>
+                          <td className="p-4 font-medium text-white">{solve.profiles?.username || "Unknown"}</td>
+                          <td className="p-4 text-primary">{solve.challenges?.title || "Unknown"}</td>
+                          <td className="p-4 text-right">
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => handleDeleteSolve(solve.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             )}
 
