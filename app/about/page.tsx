@@ -1,7 +1,11 @@
+import { Navbar } from "@/components/layout/navbar"
+
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-black pt-24 pb-12 px-4 md:px-6">
-      <div className="container mx-auto max-w-4xl space-y-12 text-white">
+    <div className="min-h-screen bg-black">
+      <Navbar />
+      <div className="pt-24 pb-12 px-4 md:px-6">
+        <div className="container mx-auto max-w-4xl space-y-12 text-white">
         
         <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
@@ -51,6 +55,7 @@ export default function AboutPage() {
         </div>
 
       </div>
+    </div>
     </div>
   )
 }

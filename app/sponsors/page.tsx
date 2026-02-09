@@ -1,9 +1,12 @@
-import Image from "next/link"
+import Link from "next/link"
+import { Navbar } from "@/components/layout/navbar"
 
 export default function SponsorsPage() {
   return (
-    <div className="min-h-screen bg-black pt-24 pb-12 px-4 md:px-6">
-      <div className="container mx-auto max-w-4xl text-center space-y-16">
+    <div className="min-h-screen bg-black">
+      <Navbar />
+      <div className="pt-24 pb-12 px-4 md:px-6">
+        <div className="container mx-auto max-w-4xl text-center space-y-16">
         
         <div className="space-y-4">
           <h1 className="text-4xl font-bold text-white">Our Sponsors</h1>
@@ -47,6 +50,7 @@ export default function SponsorsPage() {
         </div>
 
       </div>
+    </div>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { Navbar } from "@/components/layout/navbar"
 import { useState } from "react"
 
 export default function ContactPage() {
@@ -13,8 +14,10 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black pt-24 pb-12 px-4 md:px-6">
-      <div className="container mx-auto max-w-2xl">
+    <div className="min-h-screen bg-black">
+      <Navbar />
+      <div className="pt-24 pb-12 px-4 md:px-6">
+        <div className="container mx-auto max-w-2xl">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-8 md:p-12">
           
           <div className="text-center space-y-4 mb-8">
@@ -60,6 +63,7 @@ export default function ContactPage() {
 
         </div>
       </div>
+    </div>
     </div>
   )
 }
