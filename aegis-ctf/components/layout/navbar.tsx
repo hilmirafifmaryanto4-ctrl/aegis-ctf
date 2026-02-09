@@ -4,10 +4,10 @@ import Link from "next/link"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Menu, X, Shield, LogOut, User, Bell, Trophy } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { supabase } from "@/lib/supabase"
+import { Button } from "../../components/ui/button"
+import { supabase } from "../../lib/supabase"
 import { useRouter, usePathname } from "next/navigation"
-import { getRankName } from "@/lib/rank"
+import { getRankName } from "../../lib/rank"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
