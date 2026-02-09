@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { Footer } from "@/components/layout/footer";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -20,6 +21,27 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
   },
+  openGraph: {
+    title: "Aegis CTF 2026",
+    description: "The Ultimate Cyber Security Challenge. Are you ready to hack?",
+    url: "https://ctfsyem.my.id",
+    siteName: "Aegis CTF",
+    images: [
+      {
+        url: "https://ctfsyem.my.id/og-image.jpg", // You should add an actual image here
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Aegis CTF 2026",
+    description: "The Ultimate Cyber Security Challenge.",
+    images: ["https://ctfsyem.my.id/og-image.jpg"],
+  },
 };
 
 export default function RootLayout({
@@ -29,8 +51,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <body className="antialiased min-h-screen bg-background text-foreground font-sans">
-        {children}
+      <body className="antialiased min-h-screen bg-background text-foreground font-sans flex flex-col">
+        <div className="flex-1">
+          {children}
+        </div>
+        <Footer />
       </body>
     </html>
   );

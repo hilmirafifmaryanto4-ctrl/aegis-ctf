@@ -1,99 +1,126 @@
 "use client"
 
-import { Navbar } from "@/components/layout/navbar"
-import { motion } from "framer-motion"
-import { Trophy, Medal } from "lucide-react"
-
-// Mock Data
-const leaderboard = Array.from({ length: 20 }).map((_, i) => ({
-  rank: i + 1,
-  username: i === 0 ? "Hackerman" : `User_${1000 + i}`,
-  score: Math.floor(10000 / (i + 1)) + 500,
-  solves: Math.floor(50 / (i + 1)) + 5,
-  lastSolve: "10 mins ago",
-}))
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
+import { Trophy, Medal, User } from "lucide-react"
 
 export default function ScoreboardPage() {
-  const getRankIcon = (rank: number) => {
-    switch (rank) {
-      case 1:
-        return <Trophy className="h-6 w-6 text-yellow-400" />
-      case 2:
-        return <Medal className="h-6 w-6 text-gray-300" />
-      case 3:
-        return <Medal className="h-6 w-6 text-amber-600" />
-      default:
-        return <span className="text-muted-foreground font-mono">#{rank}</span>
+  const [leaderboard, setLeaderboard] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      // Fetch all solves joined with challenge points
+      // Note: In a real production app, this should be a Database View for performance
+      const { data: solves, error } = await supabase
+        .from('solves')
+        .select(`
+          user_id,
+          challenges (
+            points
+          )
+        `)
+
+      if (error) {
+        console.error("Error fetching scoreboard:", error)
+        setLoading(false)
+        return
+      }
+
+      // Fetch user profiles (email/username)
+      // Note: We need a 'profiles' table ideally, but we'll use auth metadata if possible 
+      // or just assume we have user_id map. 
+      // For now, let's just group by user_id and sum points.
+      
+      const userScores: Record<string, number> = {}
+      
+      solves?.forEach((solve: any) => {
+        const uid = solve.user_id
+        const points = solve.challenges?.points || 0
+        userScores[uid] = (userScores[uid] || 0) + points
+      })
+
+      // Convert to array and sort
+      const sortedLeaderboard = Object.entries(userScores)
+        .map(([id, score]) => ({ id, score, username: "Hacker_" + id.slice(0, 4) })) // Placeholder username
+        .sort((a, b) => b.score - a.score)
+
+      // Fetch actual usernames (This is tricky with just Auth, usually needs a public profile table)
+      // We will try to fetch usernames if we stored them in metadata, but RLS might block listing all users.
+      // Ideally: Create a public 'profiles' table that syncs with Auth.
+      
+      setLeaderboard(sortedLeaderboard)
+      setLoading(false)
     }
-  }
+
+    fetchLeaderboard()
+  }, [])
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
-      <main className="container mx-auto px-4 pt-24 pb-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8 text-center"
-        >
-          <h1 className="text-4xl font-bold text-foreground mb-4">Scoreboard</h1>
-          <p className="text-muted-foreground">Top hackers of Aegis CTF 2026</p>
-        </motion.div>
+    <div className="min-h-screen bg-black pt-24 pb-12 px-4 md:px-6">
+      <div className="container mx-auto max-w-4xl space-y-8">
+        
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl font-bold text-white flex items-center justify-center gap-3">
+            <Trophy className="h-10 w-10 text-yellow-500" />
+            Scoreboard
+          </h1>
+          <p className="text-muted-foreground">Top hackers of Aegis CTF</p>
+        </div>
 
-        <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden">
+        <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-white/5 text-muted-foreground">
-                <tr>
-                  <th className="px-6 py-4 font-medium">Rank</th>
-                  <th className="px-6 py-4 font-medium">User</th>
-                  <th className="px-6 py-4 font-medium text-right">Solves</th>
-                  <th className="px-6 py-4 font-medium text-right">Score</th>
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-white/5 border-b border-white/10">
+                  <th className="p-4 text-sm font-medium text-muted-foreground w-20 text-center">Rank</th>
+                  <th className="p-4 text-sm font-medium text-muted-foreground">User</th>
+                  <th className="p-4 text-sm font-medium text-muted-foreground text-right">Score</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
-                {leaderboard.map((user, index) => (
-                  <motion.tr
-                    key={user.rank}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className={`group hover:bg-white/5 transition-colors ${
-                      user.rank <= 3 ? "bg-white/[0.02]" : ""
-                    }`}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        {getRankIcon(user.rank)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 font-medium text-foreground">
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs border border-primary/20">
-                          {user.username.slice(0, 2).toUpperCase()}
-                        </div>
-                        {user.username}
-                        {user.rank === 1 && (
-                          <span className="inline-flex items-center rounded-full bg-yellow-400/10 px-2 py-0.5 text-xs font-medium text-yellow-400 border border-yellow-400/20">
-                            Leader
-                          </span>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={3} className="p-8 text-center text-muted-foreground">Loading scoreboard...</td>
+                  </tr>
+                ) : leaderboard.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="p-8 text-center text-muted-foreground">No solves yet. Be the first!</td>
+                  </tr>
+                ) : (
+                  leaderboard.map((entry, index) => (
+                    <tr key={entry.id} className="border-b border-white/10 last:border-0 hover:bg-white/5 transition-colors">
+                      <td className="p-4 text-center">
+                        {index === 0 ? (
+                          <div className="flex justify-center"><Medal className="h-6 w-6 text-yellow-500" /></div>
+                        ) : index === 1 ? (
+                          <div className="flex justify-center"><Medal className="h-6 w-6 text-gray-400" /></div>
+                        ) : index === 2 ? (
+                          <div className="flex justify-center"><Medal className="h-6 w-6 text-amber-700" /></div>
+                        ) : (
+                          <span className="text-white font-bold text-lg">{index + 1}</span>
                         )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right text-muted-foreground">
-                      {user.solves}
-                    </td>
-                    <td className="px-6 py-4 text-right font-bold text-primary">
-                      {user.score}
-                    </td>
-                  </motion.tr>
-                ))}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
+                            <User className="h-4 w-4 text-primary" />
+                          </div>
+                          <span className="text-white font-medium">{entry.username}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-right">
+                        <span className="text-xl font-bold text-primary">{entry.score}</span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </div>
-      </main>
+
+      </div>
     </div>
   )
 }

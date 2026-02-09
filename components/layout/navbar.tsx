@@ -59,19 +59,19 @@ export function Navbar() {
           {navItems.map((item) => (
             <Link
               key={item.name}
-              href={item.href}
+              href={user && item.name === "Home" ? "/dashboard" : item.href}
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary hover:drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]"
             >
-              {item.name}
+              {user && item.name === "Home" ? "Dashboard" : item.name}
             </Link>
           ))}
           <div className="flex items-center gap-4 ml-4">
             {user ? (
               <div className="flex items-center gap-4">
-                 <Link href="/dashboard">
+                 <Link href="/profile">
                   <Button variant="ghost" size="sm" className="gap-2">
                     <User className="h-4 w-4" />
-                    Dashboard
+                    Profile
                   </Button>
                 </Link>
                 <Button variant="outline" size="sm" onClick={handleSignOut} className="gap-2 border-red-500/50 text-red-500 hover:bg-red-500/10 hover:text-red-400">
@@ -114,20 +114,20 @@ export function Navbar() {
               {navItems.map((item) => (
                 <Link
                   key={item.name}
-                  href={item.href}
+                  href={user && item.name === "Home" ? "/dashboard" : item.href}
                   className="text-sm font-medium text-muted-foreground hover:text-primary"
                   onClick={() => setIsOpen(false)}
                 >
-                  {item.name}
+                  {user && item.name === "Home" ? "Dashboard" : item.name}
                 </Link>
               ))}
               <div className="flex flex-col gap-2 pt-4 border-t border-white/10">
                 {user ? (
                   <>
-                    <Link href="/dashboard" onClick={() => setIsOpen(false)}>
+                    <Link href="/profile" onClick={() => setIsOpen(false)}>
                       <Button variant="ghost" className="w-full justify-start gap-2">
                         <User className="h-4 w-4" />
-                        Dashboard
+                        Profile
                       </Button>
                     </Link>
                     <Button 
