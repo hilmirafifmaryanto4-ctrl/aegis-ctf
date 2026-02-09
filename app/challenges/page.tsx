@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import { Navbar } from "@/components/layout/navbar"
 import { Button } from "@/components/ui/button"
 import { Flag, X, CheckCircle, XCircle } from "lucide-react"
 
@@ -43,8 +44,10 @@ export default function ChallengesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black pt-24 pb-12 px-4 md:px-6">
-      <div className="container mx-auto space-y-12">
+    <div className="min-h-screen bg-black">
+      <Navbar />
+      <div className="pt-24 pb-12 px-4 md:px-6">
+        <div className="container mx-auto space-y-12">
         <h1 className="text-4xl font-bold text-white text-center">Challenges</h1>
 
         {loading ? (

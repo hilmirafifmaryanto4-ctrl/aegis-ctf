@@ -3,12 +3,19 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import { Navbar } from "@/components/layout/navbar"
 import { Button } from "@/components/ui/button"
-import { User, Mail, Calendar, Shield, Trophy, Target } from "lucide-react"
+import { User, Mail, Calendar, Shield, Trophy, Target, CheckCircle } from "lucide-react"
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    rank: "N/A",
+    score: 0,
+    solved: 0
+  })
+  const [recentSolves, setRecentSolves] = useState<any[]>([])
   const router = useRouter()
 
   useEffect(() => {
@@ -19,6 +26,31 @@ export default function ProfilePage() {
         return
       }
       setUser(session.user)
+
+      // Fetch Stats
+      const { data: solves } = await supabase
+        .from('solves')
+        .select(`
+          created_at,
+          challenges (
+            title,
+            category,
+            points
+          )
+        `)
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false })
+
+      if (solves) {
+        const totalScore = solves.reduce((acc, solve: any) => acc + (solve.challenges?.points || 0), 0)
+        setStats({
+          rank: "N/A", // Placeholder
+          score: totalScore,
+          solved: solves.length
+        })
+        setRecentSolves(solves)
+      }
+
       setLoading(false)
     }
     getUser()
@@ -27,8 +59,10 @@ export default function ProfilePage() {
   if (loading) return <div className="min-h-screen bg-black pt-24 text-white text-center">Loading...</div>
 
   return (
-    <div className="min-h-screen bg-black pt-24 pb-12 px-4 md:px-6">
-      <div className="container mx-auto max-w-4xl space-y-8">
+    <div className="min-h-screen bg-black">
+      <Navbar />
+      <div className="pt-24 pb-12 px-4 md:px-6">
+        <div className="container mx-auto max-w-4xl space-y-8">
         
         {/* Profile Header */}
         <div className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-md">
@@ -64,7 +98,7 @@ export default function ProfilePage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Current Rank</p>
-                <p className="text-2xl font-bold text-white">#42</p>
+                <p className="text-2xl font-bold text-white">{stats.rank}</p>
               </div>
             </div>
           </div>
@@ -75,7 +109,7 @@ export default function ProfilePage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Score</p>
-                <p className="text-2xl font-bold text-white">1,337</p>
+                <p className="text-2xl font-bold text-white">{stats.score}</p>
               </div>
             </div>
           </div>
@@ -86,7 +120,7 @@ export default function ProfilePage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Challenges Solved</p>
-                <p className="text-2xl font-bold text-white">12</p>
+                <p className="text-2xl font-bold text-white">{stats.solved}</p>
               </div>
             </div>
           </div>
@@ -100,16 +134,20 @@ export default function ProfilePage() {
               <span>Challenge</span>
               <span>Time</span>
             </div>
-            {[1, 2, 3].map((_, i) => (
-              <div key={i} className="p-4 border-b border-white/10 last:border-0 flex justify-between items-center hover:bg-white/5 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                  <span className="text-white font-medium">Buffer Overflow {i + 1}</span>
-                  <span className="text-xs px-2 py-0.5 rounded bg-primary/20 text-primary">Pwn</span>
+            {recentSolves.length === 0 ? (
+                <div className="p-4 text-center text-muted-foreground">No solves yet.</div>
+            ) : (
+                recentSolves.map((solve, i) => (
+                <div key={i} className="p-4 border-b border-white/10 last:border-0 flex justify-between items-center hover:bg-white/5 transition-colors">
+                    <div className="flex items-center gap-3">
+                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                    <span className="text-white font-medium">{solve.challenges?.title}</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-primary/20 text-primary">{solve.challenges?.category}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">{new Date(solve.created_at).toLocaleDateString()}</span>
                 </div>
-                <span className="text-sm text-muted-foreground">2 hours ago</span>
-              </div>
-            ))}
+                ))
+            )}
           </div>
         </div>
 

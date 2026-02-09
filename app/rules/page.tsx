@@ -1,7 +1,11 @@
+import { Navbar } from "@/components/layout/navbar"
+
 export default function RulesPage() {
   return (
-    <div className="min-h-screen bg-black pt-24 pb-12 px-4 md:px-6">
-      <div className="container mx-auto max-w-3xl space-y-12">
+    <div className="min-h-screen bg-black">
+      <Navbar />
+      <div className="pt-24 pb-12 px-4 md:px-6">
+        <div className="container mx-auto max-w-3xl space-y-12">
         
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold text-white">Rules & Regulations</h1>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
+import { Navbar } from "@/components/layout/navbar"
 import { Trophy, Medal, User } from "lucide-react"
 
 export default function ScoreboardPage() {
@@ -11,7 +12,6 @@ export default function ScoreboardPage() {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       // Fetch all solves joined with challenge points
-      // Note: In a real production app, this should be a Database View for performance
       const { data: solves, error } = await supabase
         .from('solves')
         .select(`
@@ -27,11 +27,17 @@ export default function ScoreboardPage() {
         return
       }
 
-      // Fetch user profiles (email/username)
-      // Note: We need a 'profiles' table ideally, but we'll use auth metadata if possible 
-      // or just assume we have user_id map. 
-      // For now, let's just group by user_id and sum points.
+      // Fetch profiles to get usernames
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, username')
       
+      const profileMap: Record<string, string> = {}
+      profiles?.forEach((p: any) => {
+        profileMap[p.id] = p.username || "Anonymous"
+      })
+
+      // Calculate scores
       const userScores: Record<string, number> = {}
       
       solves?.forEach((solve: any) => {
@@ -42,12 +48,12 @@ export default function ScoreboardPage() {
 
       // Convert to array and sort
       const sortedLeaderboard = Object.entries(userScores)
-        .map(([id, score]) => ({ id, score, username: "Hacker_" + id.slice(0, 4) })) // Placeholder username
+        .map(([id, score]) => ({ 
+          id, 
+          score, 
+          username: profileMap[id] || "Hacker_" + id.slice(0, 4) 
+        }))
         .sort((a, b) => b.score - a.score)
-
-      // Fetch actual usernames (This is tricky with just Auth, usually needs a public profile table)
-      // We will try to fetch usernames if we stored them in metadata, but RLS might block listing all users.
-      // Ideally: Create a public 'profiles' table that syncs with Auth.
       
       setLeaderboard(sortedLeaderboard)
       setLoading(false)
@@ -57,8 +63,10 @@ export default function ScoreboardPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-black pt-24 pb-12 px-4 md:px-6">
-      <div className="container mx-auto max-w-4xl space-y-8">
+    <div className="min-h-screen bg-black">
+      <Navbar />
+      <div className="pt-24 pb-12 px-4 md:px-6">
+        <div className="container mx-auto max-w-4xl space-y-8">
         
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold text-white flex items-center justify-center gap-3">
