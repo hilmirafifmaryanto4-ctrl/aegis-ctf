@@ -6,7 +6,7 @@ import { motion, HTMLMotionProps } from "framer-motion"
 
 interface ButtonProps extends HTMLMotionProps<"button"> {
   variant?: "primary" | "secondary" | "outline" | "ghost" | "destructive"
-  size?: "sm" | "md" | "lg"
+  size?: "sm" | "md" | "lg" | "icon"
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -23,6 +23,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       sm: "h-9 px-4 text-xs",
       md: "h-11 px-8 text-sm",
       lg: "h-14 px-10 text-base",
+      icon: "h-10 w-10",
     }
 
     return (
