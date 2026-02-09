@@ -3,15 +3,17 @@
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, X, Shield, LogOut, User, Bell } from "lucide-react"
+import { Menu, X, Shield, LogOut, User, Bell, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { useRouter, usePathname } from "next/navigation"
+import { getRankName } from "@/lib/rank"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [rank, setRank] = useState<{ name: string, color: string } | null>(null)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -28,6 +30,27 @@ export function Navbar() {
     { name: "Scoreboard", href: "/scoreboard" }, // Usually public
   ]
 
+  const fetchUserData = async (userId: string) => {
+    // 1. Check Admin Role
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single()
+    setIsAdmin(profile?.role === 'admin')
+
+    // 2. Calculate Rank (Score)
+    const { data: solves } = await supabase
+      .from('solves')
+      .select('challenges(points)')
+      .eq('user_id', userId)
+    
+    if (solves) {
+      const totalScore = solves.reduce((acc, solve: any) => acc + (solve.challenges?.points || 0), 0)
+      setRank(getRankName(totalScore))
+    }
+  }
+
   useEffect(() => {
     // Check initial session
     const checkUser = async () => {
@@ -35,12 +58,7 @@ export function Navbar() {
       setUser(session?.user ?? null)
       
       if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single()
-        setIsAdmin(profile?.role === 'admin')
+        fetchUserData(session.user.id)
       }
     }
     checkUser()
@@ -51,14 +69,10 @@ export function Navbar() {
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null)
       if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single()
-        setIsAdmin(profile?.role === 'admin')
+        fetchUserData(session.user.id)
       } else {
         setIsAdmin(false)
+        setRank(null)
       }
     })
 
@@ -108,6 +122,12 @@ export function Navbar() {
           <div className="flex items-center gap-4 ml-4">
             {user ? (
               <div className="flex items-center gap-4">
+                {rank && (
+                  <div className={`hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 ${rank.color}`}>
+                    <Trophy className="h-4 w-4" />
+                    <span className="text-xs font-bold uppercase tracking-wider">{rank.name}</span>
+                  </div>
+                )}
                  <Link href="/notifications">
                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary relative">
                      <Bell className="h-5 w-5" />
@@ -172,15 +192,22 @@ export function Navbar() {
               {isAdmin && (
                 <Link
                   href="/admin"
-                  className="text-sm font-medium text-red-500 hover:text-red-400"
+                  className="text-sm font-medium text-red-500 hover:text-red-400 flex items-center gap-2"
                   onClick={() => setIsOpen(false)}
                 >
+                  <Shield className="h-4 w-4" />
                   Admin Panel
                 </Link>
               )}
               <div className="flex flex-col gap-2 pt-4 border-t border-white/10">
                 {user ? (
                   <>
+                    {rank && (
+                      <div className={`flex items-center gap-2 px-3 py-2 rounded-md bg-white/5 border border-white/10 ${rank.color} mb-2`}>
+                        <Trophy className="h-4 w-4" />
+                        <span className="text-xs font-bold uppercase tracking-wider">{rank.name}</span>
+                      </div>
+                    )}
                     <Link href="/notifications" onClick={() => setIsOpen(false)}>
                       <Button variant="ghost" className="w-full justify-start gap-2">
                         <Bell className="h-4 w-4" />
