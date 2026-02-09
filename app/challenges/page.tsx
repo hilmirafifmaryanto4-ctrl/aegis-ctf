@@ -132,5 +132,6 @@ export default function ChallengesPage() {
 
       </div>
     </div>
+    </div>
   )
 }

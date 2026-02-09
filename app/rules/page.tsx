@@ -49,5 +49,6 @@ export default function RulesPage() {
 
       </div>
     </div>
+    </div>
   )
 }
