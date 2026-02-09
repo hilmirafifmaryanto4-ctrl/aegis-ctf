@@ -8,11 +8,11 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           
           <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded bg-primary/20 text-primary">
-                <Shield className="h-5 w-5" />
+            <Link href="/" className="flex items-center gap-2 group">
+              <div className="relative flex h-8 w-8 items-center justify-center transition-all group-hover:drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]">
+                <img src="/aegis.png" alt="Aegis Logo" className="h-8 w-8 object-contain" />
               </div>
-              <span className="text-xl font-bold tracking-tight text-white">
+              <span className="text-xl font-bold tracking-tight text-white group-hover:text-primary transition-colors">
                 AEGIS<span className="text-primary">CTF</span>
               </span>
             </Link>

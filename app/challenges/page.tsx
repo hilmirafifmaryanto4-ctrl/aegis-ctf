@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { Navbar } from "@/components/layout/navbar"
 import { Button } from "@/components/ui/button"
-import { Flag, X, CheckCircle, XCircle, Lock, Lightbulb, Unlock } from "lucide-react"
+import { Flag, X, CheckCircle, XCircle, Lock, Lightbulb, Unlock, Users } from "lucide-react"
 import Link from "next/link"
 
 export default function ChallengesPage() {
@@ -17,6 +17,9 @@ export default function ChallengesPage() {
   const [authChecking, setAuthChecking] = useState(true)
   const [hints, setHints] = useState<any[]>([])
   const [unlockedHints, setUnlockedHints] = useState<any[]>([])
+  const [solvedChallenges, setSolvedChallenges] = useState<string[]>([])
+  const [solvers, setSolvers] = useState<any[]>([])
+  const [activeTab, setActiveTab] = useState<"description" | "solves">("description")
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -24,6 +27,7 @@ export default function ChallengesPage() {
       if (session) {
         setIsAuthenticated(true)
         fetchChallenges()
+        fetchUserSolves(session.user.id)
       } else {
         setIsAuthenticated(false)
         setLoading(false)
@@ -33,10 +37,39 @@ export default function ChallengesPage() {
     checkAuth()
   }, [])
 
+  const fetchUserSolves = async (userId: string) => {
+    const { data } = await supabase
+      .from('solves')
+      .select('challenge_id')
+      .eq('user_id', userId)
+    
+    if (data) {
+      setSolvedChallenges(data.map(s => s.challenge_id))
+    }
+  }
+
+  const fetchSolvers = async (challengeId: string) => {
+    const { data } = await supabase
+      .from('solves')
+      .select(`
+        created_at,
+        profiles (
+          id,
+          username
+        )
+      `)
+      .eq('challenge_id', challengeId)
+      .order('created_at', { ascending: true })
+    
+    if (data) setSolvers(data)
+  }
+
   const fetchChallenges = async () => {
-    const { data, error } = await supabase
+    // Note: In a real production app, we would join with solves count view
+    const { data } = await supabase
       .from('challenges')
       .select('*')
+      .eq('state', 'visible') // Only show visible challenges
       .order('points', { ascending: true })
     
     if (data) setChallenges(data)
@@ -86,6 +119,7 @@ export default function ChallengesPage() {
 
     if (data === true) {
       setSubmitStatus("success")
+      setSolvedChallenges([...solvedChallenges, selectedChallenge.id])
     } else {
       setSubmitStatus("error")
     }
@@ -194,9 +228,20 @@ export default function ChallengesPage() {
                     setFlagInput("")
                     setSubmitStatus("idle")
                     fetchHints(challenge.id)
+                    fetchSolvers(challenge.id)
+                    setActiveTab("description")
                   }}
-                  className="p-6 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-primary/50 transition-all text-left group flex flex-col h-full"
+                  className={`p-6 rounded-xl border transition-all text-left group flex flex-col h-full relative overflow-hidden ${
+                    solvedChallenges.includes(challenge.id) 
+                      ? "border-green-500/30 bg-green-950/10 hover:bg-green-950/20" 
+                      : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-primary/50"
+                  }`}
                 >
+                  {solvedChallenges.includes(challenge.id) && (
+                    <div className="absolute top-0 right-0 p-2">
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    </div>
+                  )}
                   <div className="flex justify-between items-start mb-4 w-full">
                     <span className="text-xs px-2 py-1 rounded bg-white/10 text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary transition-colors">
                       {challenge.category}
@@ -230,83 +275,137 @@ export default function ChallengesPage() {
                 </button>
               </div>
 
-              <div className="prose prose-invert max-w-none text-sm text-gray-300">
-                <p>{selectedChallenge.description}</p>
-                {/* File Links */}
-                {selectedChallenge.files && selectedChallenge.files.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-white/10">
-                     <p className="text-white font-medium mb-2">Attached Files:</p>
-                     <div className="flex flex-wrap gap-2">
-                       {selectedChallenge.files.map((file: string, idx: number) => (
-                         <a 
-                           key={idx} 
-                           href={file} 
-                           target="_blank" 
-                           rel="noopener noreferrer"
-                           className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded flex items-center gap-2 text-primary"
-                         >
-                           Download File {idx + 1}
-                         </a>
-                       ))}
-                     </div>
-                  </div>
-                )}
+              <div className="flex gap-4 border-b border-white/10 mb-4">
+                <button 
+                  onClick={() => setActiveTab("description")}
+                  className={`pb-2 text-sm font-medium transition-colors ${activeTab === "description" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-white"}`}
+                >
+                  Description
+                </button>
+                <button 
+                  onClick={() => setActiveTab("solves")}
+                  className={`pb-2 text-sm font-medium transition-colors ${activeTab === "solves" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-white"}`}
+                >
+                  Solves ({solvers.length})
+                </button>
               </div>
 
-              {/* Hints */}
-              {hints.length > 0 && (
-                <div className="space-y-2 pt-4 border-t border-white/10">
-                  <h4 className="text-sm font-medium text-white flex items-center gap-2">
-                    <Lightbulb className="h-4 w-4 text-yellow-500" /> Hints
-                  </h4>
-                  <div className="grid gap-2">
-                    {hints.map((hint) => {
-                      const isUnlocked = unlockedHints.includes(hint.id)
-                      return (
-                        <div key={hint.id} className="text-sm p-3 rounded bg-white/5 border border-white/10">
-                          {isUnlocked ? (
-                            <p className="text-gray-300">{hint.content}</p>
-                          ) : (
-                            <div className="flex justify-between items-center">
-                              <span className="text-muted-foreground italic">Hint locked</span>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                onClick={() => handleUnlockHint(hint.id)}
-                                className="h-7 text-xs gap-1"
-                              >
-                                <Unlock className="h-3 w-3" /> Unlock ({hint.cost} pts)
-                              </Button>
-                            </div>
-                          )}
+              {activeTab === "description" ? (
+                <>
+                  <div className="prose prose-invert max-w-none text-sm text-gray-300">
+                    <p>{selectedChallenge.description}</p>
+                    {/* File Links */}
+                    {selectedChallenge.files && selectedChallenge.files.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-white/10">
+                        <p className="text-white font-medium mb-2">Attached Files:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedChallenge.files.map((file: string, idx: number) => (
+                            <a 
+                              key={idx} 
+                              href={file} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded flex items-center gap-2 text-primary"
+                            >
+                              Download File {idx + 1}
+                            </a>
+                          ))}
                         </div>
-                      )
-                    })}
+                      </div>
+                    )}
                   </div>
+
+                  {/* Hints */}
+                  {hints.length > 0 && (
+                    <div className="space-y-2 pt-4 border-t border-white/10">
+                      <h4 className="text-sm font-medium text-white flex items-center gap-2">
+                        <Lightbulb className="h-4 w-4 text-yellow-500" /> Hints
+                      </h4>
+                      <div className="grid gap-2">
+                        {hints.map((hint) => {
+                          const isUnlocked = unlockedHints.includes(hint.id)
+                          return (
+                            <div key={hint.id} className="text-sm p-3 rounded bg-white/5 border border-white/10">
+                              {isUnlocked ? (
+                                <p className="text-gray-300">{hint.content}</p>
+                              ) : (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-muted-foreground italic">Hint locked</span>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    onClick={() => handleUnlockHint(hint.id)}
+                                    className="h-7 text-xs gap-1"
+                                  >
+                                    <Unlock className="h-3 w-3" /> Unlock ({hint.cost} pts)
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2 pt-4 border-t border-white/10">
+                    <label className="text-sm font-medium text-white">Flag</label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        value={flagInput}
+                        onChange={(e) => setFlagInput(e.target.value)}
+                        placeholder="AEGIS{...}" 
+                        className="flex-1 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-white focus:outline-none focus:border-primary"
+                      />
+                      <Button onClick={handleSubmitFlag} disabled={submitStatus === 'success'}>
+                        Submit
+                      </Button>
+                    </div>
+                    {submitStatus === 'success' && (
+                      <p className="text-green-500 text-sm flex items-center gap-2"><CheckCircle className="h-4 w-4" /> Correct Flag!</p>
+                    )}
+                    {submitStatus === 'error' && (
+                      <p className="text-red-500 text-sm flex items-center gap-2"><XCircle className="h-4 w-4" /> Incorrect Flag</p>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="max-h-[400px] overflow-y-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead className="text-muted-foreground border-b border-white/10 sticky top-0 bg-[#0a0a0a]">
+                      <tr>
+                        <th className="pb-2">User</th>
+                        <th className="pb-2 text-right">Time</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {solvers.map((solve, idx) => (
+                        <tr key={idx} className="hover:bg-white/5">
+                          <td className="py-2 flex items-center gap-2">
+                            {idx === 0 && <span className="text-xs bg-yellow-500/20 text-yellow-500 px-1.5 rounded">1st</span>}
+                            {idx === 1 && <span className="text-xs bg-gray-400/20 text-gray-400 px-1.5 rounded">2nd</span>}
+                            {idx === 2 && <span className="text-xs bg-amber-700/20 text-amber-700 px-1.5 rounded">3rd</span>}
+                            <Link href={`/users/${solve.profiles.id}`} className="text-white hover:text-primary transition-colors">
+                              {solve.profiles.username || "Anonymous"}
+                            </Link>
+                          </td>
+                          <td className="py-2 text-right text-muted-foreground text-xs">
+                            {new Date(solve.created_at).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                      {solvers.length === 0 && (
+                        <tr>
+                          <td colSpan={2} className="py-8 text-center text-muted-foreground">
+                            No solves yet. Be the first blood!
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               )}
-
-              <div className="space-y-2 pt-4 border-t border-white/10">
-                <label className="text-sm font-medium text-white">Flag</label>
-                <div className="flex gap-2">
-                  <input 
-                    type="text" 
-                    value={flagInput}
-                    onChange={(e) => setFlagInput(e.target.value)}
-                    placeholder="AEGIS{...}" 
-                    className="flex-1 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-white focus:outline-none focus:border-primary"
-                  />
-                  <Button onClick={handleSubmitFlag} disabled={submitStatus === 'success'}>
-                    Submit
-                  </Button>
-                </div>
-                {submitStatus === 'success' && (
-                  <p className="text-green-500 text-sm flex items-center gap-2"><CheckCircle className="h-4 w-4" /> Correct Flag!</p>
-                )}
-                {submitStatus === 'error' && (
-                  <p className="text-red-500 text-sm flex items-center gap-2"><XCircle className="h-4 w-4" /> Incorrect Flag</p>
-                )}
-              </div>
             </div>
           </div>
         )}
