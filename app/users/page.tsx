@@ -11,19 +11,34 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
 
+  const fetchUsers = async () => {
+    // Enable Real-time subscription
+    const channel = supabase.channel('public:profiles')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        fetchData()
+      })
+      .subscribe()
+
+    const fetchData = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('username', { ascending: true })
+      
+      if (data) setUsers(data)
+      setLoading(false)
+    }
+
+    fetchData()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }
+
   useEffect(() => {
     fetchUsers()
   }, [])
-
-  const fetchUsers = async () => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('username', { ascending: true })
-    
-    if (data) setUsers(data)
-    setLoading(false)
-  }
 
   const filteredUsers = users.filter(u => 
     u.username?.toLowerCase().includes(search.toLowerCase()) || 
