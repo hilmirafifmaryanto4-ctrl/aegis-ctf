@@ -52,6 +52,11 @@ export default function ChallengesPage() {
 
         {loading ? (
           <div className="text-white text-center">Loading challenges...</div>
+        ) : challenges.length === 0 ? (
+          <div className="text-center text-muted-foreground py-12">
+            <p className="text-xl">No challenges available yet.</p>
+            <p className="text-sm mt-2">Check back later or contact the admin.</p>
+          </div>
         ) : (
           categories.map(category => {
             const catChallenges = challenges.filter(c => c.category === category)

@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Shield, Plus, Trash2 } from "lucide-react"
 
+import { Navbar } from "@/components/layout/navbar"
+
 export default function AdminPage() {
   const [formData, setFormData] = useState({
     title: "",
@@ -134,6 +136,7 @@ export default function AdminPage() {
         </div>
 
       </div>
+    </div>
     </div>
   )
 }
