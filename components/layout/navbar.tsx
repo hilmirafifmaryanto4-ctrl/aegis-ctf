@@ -18,19 +18,41 @@ const navItems = [
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
       setUser(session?.user ?? null)
-    })
+      
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single()
+        setIsAdmin(profile?.role === 'admin')
+      }
+    }
+    checkUser()
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null)
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single()
+        setIsAdmin(profile?.role === 'admin')
+      } else {
+        setIsAdmin(false)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -65,6 +87,14 @@ export function Navbar() {
               {user && item.name === "Home" ? "Dashboard" : item.name}
             </Link>
           ))}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="text-sm font-medium text-red-500 transition-colors hover:text-red-400 hover:drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]"
+            >
+              Admin Panel
+            </Link>
+          )}
           <div className="flex items-center gap-4 ml-4">
             {user ? (
               <div className="flex items-center gap-4">
@@ -121,6 +151,15 @@ export function Navbar() {
                   {user && item.name === "Home" ? "Dashboard" : item.name}
                 </Link>
               ))}
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="text-sm font-medium text-red-500 hover:text-red-400"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Admin Panel
+                </Link>
+              )}
               <div className="flex flex-col gap-2 pt-4 border-t border-white/10">
                 {user ? (
                   <>
