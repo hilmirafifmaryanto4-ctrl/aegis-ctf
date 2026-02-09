@@ -537,7 +537,6 @@ export default function AdminPage() {
                       </div>
                     </div>
                   )}
-                  </div>
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-white">Description (Markdown supported)</label>
