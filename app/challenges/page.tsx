@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/challenge-card" // Need to create this or use div
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/modal" // Custom simple modal
 import { Flag, X, CheckCircle, XCircle } from "lucide-react"
 
 export default function ChallengesPage() {
