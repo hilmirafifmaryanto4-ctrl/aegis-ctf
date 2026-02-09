@@ -1,10 +1,11 @@
 services:
   ctfd:
+    container_name: ctfsyem-app
     build: .
     user: root
     restart: always
     ports:
-      - "8000:8000"
+      - "9000:8000"
     environment:
       - UPLOAD_FOLDER=/var/uploads
       - DATABASE_URL=mysql+pymysql://ctfd:ctfd@db/ctfd
@@ -25,16 +26,20 @@ services:
         internal:
 
   nginx:
+    container_name: ctfsyem-nginx
     image: nginx:stable
     restart: always
     volumes:
       - ./conf/nginx/http.conf:/etc/nginx/nginx.conf
     ports:
-      - 80:80
+      - 9080:80
     depends_on:
       - ctfd
+    networks:
+      default:
 
   db:
+    container_name: ctfsyem-db
     image: mariadb:10.11
     restart: always
     environment:
@@ -51,12 +56,23 @@ services:
     command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --wait_timeout=28800, --log-warnings=0]
 
   cache:
+    container_name: ctfsyem-cache
     image: redis:4
     restart: always
     volumes:
     - .data/redis:/data
     networks:
         internal:
+
+  cloudflared:
+    container_name: ctfsyem-tunnel
+    image: cloudflare/cloudflared:latest
+    restart: always
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=eyJhIjoiZmE4MDY0NWJkNzkzNGI0NzI1NjVlZWU0OTkxNDljNzciLCJ0IjoiNDE5MmVkNTktOTg5MS00OWNmLWE5OWUtNzdiMTMxNGE2NTQ2IiwicyI6Ik1EVm1ZelpoTmpBdFltRmpOQzAwTkRsbUxUaGpPRE10WVRNME1XRTFOakUxTldNMSJ9
+    networks:
+      default:
 
 networks:
     default:

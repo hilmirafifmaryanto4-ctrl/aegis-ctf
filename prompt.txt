@@ -1,0 +1,22 @@
+Saya sudah menghubungkan akun Vercel dan Supabase saya di Trae Settings. 
+Sekarang, tolong lakukan deployment otomatis untuk proyek "aegis-ctf" ini.
+
+Tugas Anda:
+1. **Setup Database Supabase**:
+   - Buat proyek Supabase baru bernama "aegis-ctf".
+   - Jalankan script SQL yang ada di file `supabase/schema.sql` ke database tersebut untuk membuat tabel users, challenges, solves, dll.
+   - Ambil `NEXT_PUBLIC_SUPABASE_URL` dan `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+
+2. **Deploy ke Vercel**:
+   - Deploy folder `aegis-ctf` ke Vercel.
+   - Masukkan Environment Variables (SUPABASE_URL & ANON_KEY) ke konfigurasi Vercel saat deploy.
+   - Pastikan build command `npm run build` berjalan sukses.
+
+3. **Verifikasi**:
+   - Berikan saya URL production dari Vercel (misal: https://aegis-ctf.vercel.app).
+   - Pastikan halaman Login dan Dashboard bisa diakses.
+
+Konteks Proyek:
+- Ini adalah platform CTF berbasis Next.js 14 (App Router) + Supabase.
+- Semua kode sudah siap di folder `aegis-ctf`.
+- Desain menggunakan Tailwind CSS dengan tema Cyber-Professional (Neon).
