@@ -4,7 +4,8 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { Navbar } from "@/components/layout/navbar"
 import { Button } from "@/components/ui/button"
-import { Flag, X, CheckCircle, XCircle } from "lucide-react"
+import { Flag, X, CheckCircle, XCircle, Lock } from "lucide-react"
+import Link from "next/link"
 
 export default function ChallengesPage() {
   const [challenges, setChallenges] = useState<any[]>([])
@@ -12,19 +13,33 @@ export default function ChallengesPage() {
   const [selectedChallenge, setSelectedChallenge] = useState<any>(null)
   const [flagInput, setFlagInput] = useState("")
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle")
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [authChecking, setAuthChecking] = useState(true)
 
   useEffect(() => {
-    const fetchChallenges = async () => {
-      const { data, error } = await supabase
-        .from('challenges')
-        .select('*')
-        .order('points', { ascending: true })
-      
-      if (data) setChallenges(data)
-      setLoading(false)
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        setIsAuthenticated(true)
+        fetchChallenges()
+      } else {
+        setIsAuthenticated(false)
+        setLoading(false)
+      }
+      setAuthChecking(false)
     }
-    fetchChallenges()
+    checkAuth()
   }, [])
+
+  const fetchChallenges = async () => {
+    const { data, error } = await supabase
+      .from('challenges')
+      .select('*')
+      .order('points', { ascending: true })
+    
+    if (data) setChallenges(data)
+    setLoading(false)
+  }
 
   const categories = ["Web", "Crypto", "Pwn", "Forensics", "Reverse", "Misc"]
 
@@ -41,6 +56,47 @@ export default function ChallengesPage() {
     } else {
       setSubmitStatus("error")
     }
+  }
+
+  if (authChecking) {
+    return (
+      <div className="min-h-screen bg-black">
+        <Navbar />
+        <div className="pt-32 text-center text-white">Loading...</div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-black">
+        <Navbar />
+        <div className="pt-24 pb-12 px-4 md:px-6">
+          <div className="container mx-auto max-w-4xl text-center space-y-8 py-12">
+            <div className="flex justify-center">
+              <div className="p-4 rounded-full bg-primary/10 text-primary">
+                <Lock className="h-12 w-12" />
+              </div>
+            </div>
+            <h1 className="text-4xl font-bold text-white">Challenges Locked</h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Ready to test your skills? We have a wide range of challenges including Web Exploitation, Cryptography, Reverse Engineering, and more.
+            </p>
+            <p className="text-muted-foreground">
+              Join Aegis CTF today to access all challenges and start earning points!
+            </p>
+            <div className="flex justify-center gap-4 pt-4">
+              <Link href="/login">
+                <Button variant="outline" size="lg">Login</Button>
+              </Link>
+              <Link href="/register">
+                <Button variant="primary" size="lg">Register Now</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

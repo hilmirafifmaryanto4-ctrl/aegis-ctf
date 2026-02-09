@@ -3,64 +3,120 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { Navbar } from "@/components/layout/navbar"
-import { Trophy, Medal, User } from "lucide-react"
+import { Trophy, Medal, User, Lock } from "lucide-react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export default function ScoreboardPage() {
   const [leaderboard, setLeaderboard] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [authChecking, setAuthChecking] = useState(true)
 
   useEffect(() => {
-    const fetchLeaderboard = async () => {
-      // Fetch all solves joined with challenge points
-      const { data: solves, error } = await supabase
-        .from('solves')
-        .select(`
-          user_id,
-          challenges (
-            points
-          )
-        `)
-
-      if (error) {
-        console.error("Error fetching scoreboard:", error)
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        setIsAuthenticated(true)
+        fetchLeaderboard()
+      } else {
+        setIsAuthenticated(false)
         setLoading(false)
-        return
       }
+      setAuthChecking(false)
+    }
+    checkAuth()
+  }, [])
 
-      // Fetch profiles to get usernames
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, username')
-      
-      const profileMap: Record<string, string> = {}
-      profiles?.forEach((p: any) => {
-        profileMap[p.id] = p.username || "Anonymous"
-      })
+  const fetchLeaderboard = async () => {
+    // Fetch all solves joined with challenge points
+    const { data: solves, error } = await supabase
+      .from('solves')
+      .select(`
+        user_id,
+        challenges (
+          points
+        )
+      `)
 
-      // Calculate scores
-      const userScores: Record<string, number> = {}
-      
-      solves?.forEach((solve: any) => {
-        const uid = solve.user_id
-        const points = solve.challenges?.points || 0
-        userScores[uid] = (userScores[uid] || 0) + points
-      })
-
-      // Convert to array and sort
-      const sortedLeaderboard = Object.entries(userScores)
-        .map(([id, score]) => ({ 
-          id, 
-          score, 
-          username: profileMap[id] || "Hacker_" + id.slice(0, 4) 
-        }))
-        .sort((a, b) => b.score - a.score)
-      
-      setLeaderboard(sortedLeaderboard)
+    if (error) {
+      console.error("Error fetching scoreboard:", error)
       setLoading(false)
+      return
     }
 
-    fetchLeaderboard()
-  }, [])
+    // Fetch profiles to get usernames
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, username')
+    
+    const profileMap: Record<string, string> = {}
+    profiles?.forEach((p: any) => {
+      profileMap[p.id] = p.username || "Anonymous"
+    })
+
+    // Calculate scores
+    const userScores: Record<string, number> = {}
+    
+    solves?.forEach((solve: any) => {
+      const uid = solve.user_id
+      const points = solve.challenges?.points || 0
+      userScores[uid] = (userScores[uid] || 0) + points
+    })
+
+    // Convert to array and sort
+    const sortedLeaderboard = Object.entries(userScores)
+      .map(([id, score]) => ({ 
+        id, 
+        score, 
+        username: profileMap[id] || "Hacker_" + id.slice(0, 4) 
+      }))
+      .sort((a, b) => b.score - a.score)
+    
+    setLeaderboard(sortedLeaderboard)
+    setLoading(false)
+  }
+
+  if (authChecking) {
+    return (
+      <div className="min-h-screen bg-black">
+        <Navbar />
+        <div className="pt-32 text-center text-white">Loading...</div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-black">
+        <Navbar />
+        <div className="pt-24 pb-12 px-4 md:px-6">
+          <div className="container mx-auto max-w-4xl text-center space-y-8 py-12">
+            <div className="flex justify-center">
+              <div className="p-4 rounded-full bg-yellow-500/10 text-yellow-500">
+                <Trophy className="h-12 w-12" />
+              </div>
+            </div>
+            <h1 className="text-4xl font-bold text-white">Scoreboard Hidden</h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Compete with hackers from around the world. See who's leading the race to the top!
+            </p>
+            <p className="text-muted-foreground">
+              Login to view the current standings and see where you rank.
+            </p>
+            <div className="flex justify-center gap-4 pt-4">
+              <Link href="/login">
+                <Button variant="outline" size="lg">Login</Button>
+              </Link>
+              <Link href="/register">
+                <Button variant="primary" size="lg">Register Now</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-black">
