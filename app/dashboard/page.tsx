@@ -165,10 +165,15 @@ export default function DashboardPage() {
 
           {/* Announcements / Info */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <Megaphone className="h-6 w-6 text-primary" />
-              Announcements
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                <Megaphone className="h-6 w-6 text-primary" />
+                Announcements
+              </h2>
+              <Link href="/notifications" className="text-sm text-primary hover:underline">
+                View All
+              </Link>
+            </div>
             <div className="rounded-xl border border-white/10 bg-white/5 p-6 space-y-4 max-h-[400px] overflow-y-auto">
               {announcements.length === 0 ? (
                 <div className="text-center text-muted-foreground py-4">No announcements yet.</div>

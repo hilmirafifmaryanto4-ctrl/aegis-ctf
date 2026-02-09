@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { Navbar } from "@/components/layout/navbar"
 import { Button } from "@/components/ui/button"
-import { User, Mail, Calendar, Shield, Trophy, Target, CheckCircle } from "lucide-react"
+import Link from "next/link"
+import { User, Mail, Calendar, Shield, Trophy, Target, CheckCircle, Settings, ExternalLink } from "lucide-react"
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null)
@@ -129,20 +130,36 @@ export default function ProfilePage() {
               </div>
             </div>
             
-            <div className="flex gap-2">
-              {isEditing ? (
-                <>
-                  <Button onClick={handleUpdateProfile} className="bg-cyan-500 text-black hover:bg-cyan-400 font-bold shadow-[0_0_15px_rgba(6,182,212,0.5)] border border-cyan-400">
-                    Save
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                {isEditing ? (
+                  <>
+                    <Button onClick={handleUpdateProfile} className="bg-cyan-500 text-black hover:bg-cyan-400 font-bold shadow-[0_0_15px_rgba(6,182,212,0.5)] border border-cyan-400">
+                      Save
+                    </Button>
+                    <Button variant="ghost" onClick={() => setIsEditing(false)} className="text-white hover:bg-white/10">
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="outline" onClick={() => setIsEditing(true)} className="border-primary/50 text-primary hover:bg-primary/10">
+                    Edit Profile
                   </Button>
-                  <Button variant="ghost" onClick={() => setIsEditing(false)} className="text-white hover:bg-white/10">
-                    Cancel
-                  </Button>
-                </>
-              ) : (
-                <Button variant="outline" onClick={() => setIsEditing(true)} className="border-primary/50 text-primary hover:bg-primary/10">
-                  Edit Profile
-                </Button>
+                )}
+              </div>
+              {!isEditing && (
+                <div className="flex gap-2">
+                  <Link href="/settings">
+                    <Button variant="ghost" size="sm" className="w-full text-muted-foreground hover:text-white">
+                      <Settings className="h-4 w-4 mr-2" /> Settings
+                    </Button>
+                  </Link>
+                  <Link href={`/users/${user.id}`}>
+                    <Button variant="ghost" size="sm" className="w-full text-muted-foreground hover:text-white">
+                      <ExternalLink className="h-4 w-4 mr-2" /> Public View
+                    </Button>
+                  </Link>
+                </div>
               )}
             </div>
           </div>

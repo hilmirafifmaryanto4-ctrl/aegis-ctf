@@ -12,6 +12,8 @@ const navItems = [
   { name: "Home", href: "/" },
   { name: "Challenges", href: "/challenges" },
   { name: "Scoreboard", href: "/scoreboard" },
+  { name: "Users", href: "/users" },
+  { name: "Activity", href: "/activity" },
   { name: "Rules", href: "/rules" },
 ]
 
