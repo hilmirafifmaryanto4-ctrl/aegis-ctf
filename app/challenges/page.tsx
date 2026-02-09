@@ -35,7 +35,35 @@ export default function ChallengesPage() {
       setAuthChecking(false)
     }
     checkAuth()
-  }, [])
+
+    // Real-time subscription for challenges
+    const challengeSubscription = supabase
+      .channel('public:challenges')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'challenges' }, () => {
+        fetchChallenges()
+      })
+      .subscribe()
+
+    // Real-time subscription for solves (to update solved status)
+    const solvesSubscription = supabase
+      .channel('public:solves')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'solves' }, (payload) => {
+         // Refresh if the current user solved something (handled locally usually) or just refresh counts
+         // For challenges page, we mainly care if *I* solved it, which is local state, 
+         // but we might want to know if someone else solved it for "First Blood" indicators later.
+         // For now, let's just refresh challenges to get updated solve counts if we had them.
+         // If we are looking at a specific challenge modal's "solves" tab, we need to update that.
+         if (selectedChallenge) {
+            fetchSolvers(selectedChallenge.id)
+         }
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(challengeSubscription)
+      supabase.removeChannel(solvesSubscription)
+    }
+  }, [selectedChallenge]) // Re-bind if selectedChallenge changes to capture its ID for solver updates
 
   const fetchUserSolves = async (userId: string) => {
     const { data } = await supabase

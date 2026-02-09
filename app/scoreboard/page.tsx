@@ -37,6 +37,18 @@ export default function ScoreboardPage() {
       setAuthChecking(false)
     }
     checkAuth()
+
+    // Real-time subscription for solves
+    const solvesSubscription = supabase
+      .channel('public:solves')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'solves' }, () => {
+        fetchLeaderboard()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(solvesSubscription)
+    }
   }, [])
 
   const fetchLeaderboard = async () => {

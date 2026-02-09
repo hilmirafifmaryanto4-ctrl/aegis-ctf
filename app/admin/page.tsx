@@ -108,6 +108,31 @@ export default function AdminPage() {
     checkAdmin()
   }, [])
 
+  // Real-time updates for Admin Dashboard
+  useEffect(() => {
+    if (!isAdmin) return
+
+    const channel = supabase.channel('admin_dashboard')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'challenges' }, () => {
+        fetchChallenges()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'solves' }, () => {
+        fetchSolves()
+        fetchUsers() // Scores might change
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        fetchUsers()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => {
+        fetchAnnouncements()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [isAdmin])
+
   useEffect(() => {
     if (challenges.length > 0 && users.length > 0 && solves.length > 0) {
       setStats({
