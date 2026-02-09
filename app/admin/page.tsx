@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
-import { Shield, Plus, Trash2, Users, List, Trophy } from "lucide-react"
+import { Shield, Plus, Trash2, Users, List, Trophy, Upload, X, FileText } from "lucide-react"
 import { Navbar } from "@/components/layout/navbar"
+import { useDropzone } from "react-dropzone" // We'll implement a custom dropzone without extra deps to save time/errors
 
 export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false)
@@ -19,10 +20,53 @@ export default function AdminPage() {
     description: "",
     points: 100,
     flag: "",
-    files: [] as string[] // Placeholder for file URLs
+    files: [] as string[]
   })
+  const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
+
+  // ... (rest of the code)
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return
+    
+    setUploading(true)
+    const file = e.target.files[0]
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${Math.random()}.${fileExt}`
+    const filePath = `${fileName}`
+
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('challenge-files')
+        .upload(filePath, file)
+
+      if (uploadError) {
+        throw uploadError
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('challenge-files')
+        .getPublicUrl(filePath)
+
+      setFormData(prev => ({
+        ...prev,
+        files: [...prev.files, publicUrl]
+      }))
+    } catch (error: any) {
+      alert('Error uploading file: ' + error.message)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const removeFile = (indexToRemove: number) => {
+    setFormData(prev => ({
+      ...prev,
+      files: prev.files.filter((_, index) => index !== indexToRemove)
+    }))
+  }
 
   // Check Admin Access
   useEffect(() => {
@@ -260,14 +304,49 @@ export default function AdminPage() {
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-white">File URL (Optional)</label>
-                    <input 
-                      value={formData.files[0] || ""}
-                      onChange={e => setFormData({...formData, files: e.target.value ? [e.target.value] : []})}
-                      className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-white focus:border-primary focus:outline-none"
-                      placeholder="https://example.com/challenge.pcap"
-                    />
-                    <p className="text-xs text-muted-foreground">Paste a direct link to the challenge file (e.g. Google Drive, Dropbox, or direct host).</p>
+                    <label className="text-sm font-medium text-white">Challenge Files</label>
+                    
+                    {/* File List */}
+                    {formData.files.length > 0 && (
+                      <div className="space-y-2 mb-2">
+                        {formData.files.map((file, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-2 rounded bg-white/10 border border-white/10">
+                            <div className="flex items-center gap-2 overflow-hidden">
+                              <FileText className="h-4 w-4 text-primary flex-shrink-0" />
+                              <span className="text-xs text-white truncate">{file.split('/').pop()}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeFile(idx)}
+                              className="text-muted-foreground hover:text-red-500"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Upload Area */}
+                    <div className="relative">
+                      <input
+                        type="file"
+                        onChange={handleFileUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        disabled={uploading}
+                      />
+                      <div className="border-2 border-dashed border-white/20 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:border-primary/50 transition-colors bg-white/5">
+                        {uploading ? (
+                          <div className="animate-pulse text-sm text-primary">Uploading...</div>
+                        ) : (
+                          <>
+                            <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                            <p className="text-sm text-white font-medium">Click to upload or drag and drop</p>
+                            <p className="text-xs text-muted-foreground mt-1">Support for PCAP, Binary, Zip, etc.</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
