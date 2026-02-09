@@ -3,25 +3,30 @@
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, X, Shield, LogOut, User } from "lucide-react"
+import { Menu, X, Shield, LogOut, User, Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
-import { useRouter } from "next/navigation"
-
-const navItems = [
-  { name: "Home", href: "/" },
-  { name: "Challenges", href: "/challenges" },
-  { name: "Scoreboard", href: "/scoreboard" },
-  { name: "Users", href: "/users" },
-  { name: "Activity", href: "/activity" },
-  { name: "Rules", href: "/rules" },
-]
+import { useRouter, usePathname } from "next/navigation"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
+
+  const navItems = user ? [
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Challenges", href: "/challenges" },
+    { name: "Scoreboard", href: "/scoreboard" },
+    { name: "Users", href: "/users" },
+    { name: "Activity", href: "/activity" },
+    { name: "Rules", href: "/rules" },
+  ] : [
+    { name: "Home", href: "/" },
+    { name: "Rules", href: "/rules" },
+    { name: "Scoreboard", href: "/scoreboard" }, // Usually public
+  ]
 
   useEffect(() => {
     // Check initial session
@@ -84,10 +89,12 @@ export function Navbar() {
           {navItems.map((item) => (
             <Link
               key={item.name}
-              href={user && item.name === "Home" ? "/dashboard" : item.href}
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary hover:drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]"
+              href={item.href}
+              className={`text-sm font-medium transition-colors hover:text-primary hover:drop-shadow-[0_0_8px_rgba(6,182,212,0.5)] ${
+                pathname === item.href ? "text-primary drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]" : "text-muted-foreground"
+              }`}
             >
-              {user && item.name === "Home" ? "Dashboard" : item.name}
+              {item.name}
             </Link>
           ))}
           {isAdmin && (
@@ -101,6 +108,12 @@ export function Navbar() {
           <div className="flex items-center gap-4 ml-4">
             {user ? (
               <div className="flex items-center gap-4">
+                 <Link href="/notifications">
+                   <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary relative">
+                     <Bell className="h-5 w-5" />
+                     {/* We could add a badge here if we had notification count state */}
+                   </Button>
+                 </Link>
                  <Link href="/profile">
                   <Button variant="ghost" size="sm" className="gap-2">
                     <User className="h-4 w-4" />
@@ -147,11 +160,13 @@ export function Navbar() {
               {navItems.map((item) => (
                 <Link
                   key={item.name}
-                  href={user && item.name === "Home" ? "/dashboard" : item.href}
-                  className="text-sm font-medium text-muted-foreground hover:text-primary"
+                  href={item.href}
+                  className={`text-sm font-medium hover:text-primary ${
+                    pathname === item.href ? "text-primary" : "text-muted-foreground"
+                  }`}
                   onClick={() => setIsOpen(false)}
                 >
-                  {user && item.name === "Home" ? "Dashboard" : item.name}
+                  {item.name}
                 </Link>
               ))}
               {isAdmin && (
@@ -166,6 +181,12 @@ export function Navbar() {
               <div className="flex flex-col gap-2 pt-4 border-t border-white/10">
                 {user ? (
                   <>
+                    <Link href="/notifications" onClick={() => setIsOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start gap-2">
+                        <Bell className="h-4 w-4" />
+                        Notifications
+                      </Button>
+                    </Link>
                     <Link href="/profile" onClick={() => setIsOpen(false)}>
                       <Button variant="ghost" className="w-full justify-start gap-2">
                         <User className="h-4 w-4" />
