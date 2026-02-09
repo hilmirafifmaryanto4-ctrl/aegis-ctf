@@ -81,6 +81,9 @@ export default function ProfilePage() {
       setIsEditing(false)
       // Update local state
       setUser({ ...user, user_metadata: { ...user.user_metadata, username: newUsername } })
+      
+      // Refresh page to sync all components
+      router.refresh()
     }
     
     setTimeout(() => setUpdateMessage(""), 3000)

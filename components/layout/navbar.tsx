@@ -61,15 +61,16 @@ export function Navbar() {
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push("/login")
-    router.refresh()
+    // Force hard refresh to clear any cached states
+    window.location.href = "/login"
   }
 
   return (
     <nav className="fixed top-0 z-50 w-full border-b border-white/10 bg-background/80 backdrop-blur-md">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="relative flex h-8 w-8 items-center justify-center rounded bg-primary/20 text-primary transition-all group-hover:shadow-[0_0_15px_rgba(6,182,212,0.5)]">
-            <Shield className="h-5 w-5" />
+          <div className="relative flex h-8 w-8 items-center justify-center transition-all group-hover:drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]">
+            <img src="/aegis.png" alt="Aegis Logo" className="h-8 w-8 object-contain" />
           </div>
           <span className="text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
             AEGIS<span className="text-primary">CTF</span>

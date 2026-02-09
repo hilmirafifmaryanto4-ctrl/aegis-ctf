@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: "Aegis CTF 2026 | The Ultimate Cyber Security Challenge",
   description: "Join the battle in the most advanced Capture The Flag competition. Test your skills in Web, Crypto, Pwn, Reverse Engineering, and Forensics.",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/aegis.png",
   },
   openGraph: {
     title: "Aegis CTF 2026",
