@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
-import { Shield, Plus, Trash2, Users, List, Trophy, Upload, X, FileText } from "lucide-react"
+import { Shield, Plus, Trash2, Users, List, Trophy, Upload, X, FileText, Megaphone, Lightbulb } from "lucide-react"
 import { Navbar } from "@/components/layout/navbar"
 
 export default function AdminPage() {
@@ -11,6 +11,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("challenges")
   const [challenges, setChallenges] = useState<any[]>([])
   const [users, setUsers] = useState<any[]>([])
+  const [announcements, setAnnouncements] = useState<any[]>([])
   
   // Form State
   const [formData, setFormData] = useState({
@@ -19,8 +20,14 @@ export default function AdminPage() {
     description: "",
     points: 100,
     flag: "",
-    files: [] as string[]
+    files: [] as string[],
+    type: "standard",
+    initial_points: 100,
+    minimum_points: 100,
+    decay: 0,
+    hints: [] as { content: string, cost: number }[]
   })
+  const [announcementContent, setAnnouncementContent] = useState("")
   const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
@@ -86,6 +93,7 @@ export default function AdminPage() {
         setIsAdmin(true)
         fetchChallenges()
         fetchUsers()
+        fetchAnnouncements()
       }
     }
     checkAdmin()
@@ -101,6 +109,11 @@ export default function AdminPage() {
     if (data) setUsers(data)
   }
 
+  const fetchAnnouncements = async () => {
+    const { data } = await supabase.from('announcements').select('*').order('created_at', { ascending: false })
+    if (data) setAnnouncements(data)
+  }
+
   const handleDeleteChallenge = async (id: string) => {
     if (!confirm("Are you sure you want to delete this challenge?")) return
     const { error } = await supabase.from('challenges').delete().eq('id', id)
@@ -111,16 +124,58 @@ export default function AdminPage() {
     }
   }
 
+  const handleDeleteAnnouncement = async (id: string) => {
+    if (!confirm("Delete this announcement?")) return
+    const { error } = await supabase.from('announcements').delete().eq('id', id)
+    if (error) fetchAnnouncements()
+    else fetchAnnouncements()
+  }
+
+  const handleCreateAnnouncement = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!announcementContent.trim()) return
+    
+    const { error } = await supabase.from('announcements').insert([{ content: announcementContent }])
+    if (error) {
+      alert("Error: " + error.message)
+    } else {
+      setAnnouncementContent("")
+      fetchAnnouncements()
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setMessage("")
 
-    const { error } = await supabase.from('challenges').insert([formData])
+    // 1. Insert Challenge
+    const { data: challenge, error } = await supabase.from('challenges').insert([{
+      title: formData.title,
+      category: formData.category,
+      description: formData.description,
+      points: formData.type === 'dynamic' ? formData.initial_points : formData.points,
+      flag: formData.flag,
+      files: formData.files,
+      type: formData.type,
+      initial_points: formData.initial_points,
+      minimum_points: formData.minimum_points,
+      decay: formData.decay
+    }]).select().single()
 
     if (error) {
       setMessage("Error creating challenge: " + error.message)
     } else {
+      // 2. Insert Hints if any
+      if (formData.hints.length > 0 && challenge) {
+        const hintsToInsert = formData.hints.map(h => ({
+          challenge_id: challenge.id,
+          content: h.content,
+          cost: h.cost
+        }))
+        await supabase.from('hints').insert(hintsToInsert)
+      }
+
       setMessage("Challenge created successfully!")
       setFormData({
         title: "",
@@ -128,7 +183,12 @@ export default function AdminPage() {
         description: "",
         points: 100,
         flag: "",
-        files: []
+        files: [],
+        type: "standard",
+        initial_points: 100,
+        minimum_points: 100,
+        decay: 0,
+        hints: []
       })
       fetchChallenges()
     }
@@ -207,6 +267,19 @@ export default function AdminPage() {
                 Users ({users.length})
               </div>
             </button>
+            <button
+              onClick={() => setActiveTab("announcements")}
+              className={`pb-4 px-4 text-sm font-medium transition-colors ${
+                activeTab === "announcements" 
+                  ? "border-b-2 border-primary text-primary" 
+                  : "text-muted-foreground hover:text-white"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Megaphone className="h-4 w-4" />
+                Announcements
+              </div>
+            </button>
           </div>
 
           {/* Content */}
@@ -278,6 +351,33 @@ export default function AdminPage() {
                         <option value="Misc">Miscellaneous</option>
                       </select>
                     </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white">Points Type</label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 text-white">
+                        <input 
+                          type="radio" 
+                          name="type" 
+                          value="standard"
+                          checked={formData.type === 'standard'}
+                          onChange={() => setFormData({...formData, type: 'standard'})}
+                        />
+                        Standard
+                      </label>
+                      <label className="flex items-center gap-2 text-white">
+                        <input 
+                          type="radio" 
+                          name="type" 
+                          value="dynamic"
+                          checked={formData.type === 'dynamic'}
+                          onChange={() => setFormData({...formData, type: 'dynamic'})}
+                        />
+                        Dynamic
+                      </label>
+                    </div>
+                  </div>
+
+                  {formData.type === 'standard' ? (
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-white">Points</label>
                       <input 
@@ -288,6 +388,37 @@ export default function AdminPage() {
                         className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-white focus:border-primary focus:outline-none"
                       />
                     </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-white">Initial</label>
+                        <input 
+                          type="number"
+                          value={formData.initial_points}
+                          onChange={e => setFormData({...formData, initial_points: parseInt(e.target.value)})}
+                          className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-white"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-white">Minimum</label>
+                        <input 
+                          type="number"
+                          value={formData.minimum_points}
+                          onChange={e => setFormData({...formData, minimum_points: parseInt(e.target.value)})}
+                          className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-white"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-white">Decay</label>
+                        <input 
+                          type="number"
+                          value={formData.decay}
+                          onChange={e => setFormData({...formData, decay: parseInt(e.target.value)})}
+                          className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-white"
+                        />
+                      </div>
+                    </div>
+                  )}
                   </div>
 
                   <div className="space-y-2">
@@ -359,6 +490,63 @@ export default function AdminPage() {
                     />
                   </div>
 
+                  {/* Hints Section */}
+                  <div className="space-y-4 pt-4 border-t border-white/10">
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm font-medium text-white">Hints</label>
+                      <Button 
+                        type="button" 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => setFormData({...formData, hints: [...formData.hints, { content: "", cost: 0 }]})}
+                      >
+                        <Plus className="h-4 w-4 mr-2" /> Add Hint
+                      </Button>
+                    </div>
+                    {formData.hints.map((hint, idx) => (
+                      <div key={idx} className="flex gap-4 items-start">
+                        <div className="flex-1 space-y-2">
+                          <input 
+                            placeholder="Hint content..."
+                            value={hint.content}
+                            onChange={e => {
+                              const newHints = [...formData.hints]
+                              newHints[idx].content = e.target.value
+                              setFormData({...formData, hints: newHints})
+                            }}
+                            className="w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-white"
+                          />
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">Cost:</span>
+                            <input 
+                              type="number"
+                              placeholder="0"
+                              value={hint.cost}
+                              onChange={e => {
+                                const newHints = [...formData.hints]
+                                newHints[idx].cost = parseInt(e.target.value)
+                                setFormData({...formData, hints: newHints})
+                              }}
+                              className="w-20 rounded-md border border-white/10 bg-black/20 px-2 py-1 text-white text-sm"
+                            />
+                          </div>
+                        </div>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-red-500"
+                          onClick={() => {
+                            const newHints = formData.hints.filter((_, i) => i !== idx)
+                            setFormData({...formData, hints: newHints})
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
                   {message && (
                     <div className={`p-4 rounded-md ${message.includes("Error") ? "bg-red-500/20 text-red-500" : "bg-green-500/20 text-green-500"}`}>
                       {message}
@@ -398,6 +586,41 @@ export default function AdminPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {activeTab === "announcements" && (
+              <div className="space-y-8">
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                  <h3 className="text-lg font-bold text-white mb-4">Create Announcement</h3>
+                  <form onSubmit={handleCreateAnnouncement} className="flex gap-4">
+                    <input 
+                      value={announcementContent}
+                      onChange={e => setAnnouncementContent(e.target.value)}
+                      className="flex-1 rounded-md border border-white/10 bg-black/20 px-3 py-2 text-white focus:border-primary focus:outline-none"
+                      placeholder="Enter announcement..."
+                    />
+                    <Button type="submit">Post</Button>
+                  </form>
+                </div>
+
+                <div className="space-y-4">
+                  {announcements.map((a) => (
+                    <div key={a.id} className="rounded-xl border border-white/10 bg-white/5 p-4 flex justify-between items-center">
+                      <div>
+                        <p className="text-white">{a.content}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{new Date(a.created_at).toLocaleString()}</p>
+                      </div>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => handleDeleteAnnouncement(a.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

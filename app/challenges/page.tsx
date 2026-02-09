@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { Navbar } from "@/components/layout/navbar"
 import { Button } from "@/components/ui/button"
-import { Flag, X, CheckCircle, XCircle, Lock } from "lucide-react"
+import { Flag, X, CheckCircle, XCircle, Lock, Lightbulb, Unlock } from "lucide-react"
 import Link from "next/link"
 
 export default function ChallengesPage() {
@@ -15,6 +15,8 @@ export default function ChallengesPage() {
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [authChecking, setAuthChecking] = useState(true)
+  const [hints, setHints] = useState<any[]>([])
+  const [unlockedHints, setUnlockedHints] = useState<any[]>([])
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -39,6 +41,36 @@ export default function ChallengesPage() {
     
     if (data) setChallenges(data)
     setLoading(false)
+  }
+
+  const fetchHints = async (challengeId: string) => {
+    // 1. Fetch available hints for this challenge
+    const { data: challengeHints } = await supabase
+      .from('hints')
+      .select('*')
+      .eq('challenge_id', challengeId)
+      .order('cost', { ascending: true })
+    
+    if (challengeHints) setHints(challengeHints)
+
+    // 2. Fetch unlocked hints for this user
+    const { data: unlocks } = await supabase
+      .from('hint_unlocks')
+      .select('hint_id')
+    
+    if (unlocks) setUnlockedHints(unlocks.map(u => u.hint_id))
+  }
+
+  const handleUnlockHint = async (hintId: string) => {
+    if (!confirm("Unlock this hint? It might cost points.")) return
+
+    const { data, error } = await supabase.rpc('unlock_hint', { p_hint_id: hintId })
+    
+    if (!error) {
+      setUnlockedHints([...unlockedHints, hintId])
+    } else {
+      alert("Error unlocking hint: " + error.message)
+    }
   }
 
   const categories = ["Web", "Crypto", "Pwn", "Forensics", "Reverse", "Misc"]
@@ -145,6 +177,7 @@ export default function ChallengesPage() {
                         setSelectedChallenge(challenge)
                         setFlagInput("")
                         setSubmitStatus("idle")
+                        fetchHints(challenge.id)
                       }}
                       className="p-6 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-primary/50 transition-all text-left group"
                     >
@@ -180,9 +213,61 @@ export default function ChallengesPage() {
 
               <div className="prose prose-invert max-w-none text-sm text-gray-300">
                 <p>{selectedChallenge.description}</p>
+                {/* File Links */}
+                {selectedChallenge.files && selectedChallenge.files.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                     <p className="text-white font-medium mb-2">Attached Files:</p>
+                     <div className="flex flex-wrap gap-2">
+                       {selectedChallenge.files.map((file: string, idx: number) => (
+                         <a 
+                           key={idx} 
+                           href={file} 
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded flex items-center gap-2 text-primary"
+                         >
+                           Download File {idx + 1}
+                         </a>
+                       ))}
+                     </div>
+                  </div>
+                )}
               </div>
 
-              <div className="space-y-2">
+              {/* Hints */}
+              {hints.length > 0 && (
+                <div className="space-y-2 pt-4 border-t border-white/10">
+                  <h4 className="text-sm font-medium text-white flex items-center gap-2">
+                    <Lightbulb className="h-4 w-4 text-yellow-500" /> Hints
+                  </h4>
+                  <div className="grid gap-2">
+                    {hints.map((hint) => {
+                      const isUnlocked = unlockedHints.includes(hint.id)
+                      return (
+                        <div key={hint.id} className="text-sm p-3 rounded bg-white/5 border border-white/10">
+                          {isUnlocked ? (
+                            <p className="text-gray-300">{hint.content}</p>
+                          ) : (
+                            <div className="flex justify-between items-center">
+                              <span className="text-muted-foreground italic">Hint locked</span>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => handleUnlockHint(hint.id)}
+                                className="h-7 text-xs gap-1"
+                              >
+                                <Unlock className="h-3 w-3" /> Unlock ({hint.cost} pts)
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2 pt-4 border-t border-white/10">
                 <label className="text-sm font-medium text-white">Flag</label>
                 <div className="flex gap-2">
                   <input 

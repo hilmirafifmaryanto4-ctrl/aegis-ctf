@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Navbar } from "@/components/layout/navbar"
 import { motion } from "framer-motion"
-import { Activity, Award, CheckCircle, Crosshair } from "lucide-react"
+import { Activity, Award, CheckCircle, Crosshair, Megaphone } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
@@ -18,6 +18,7 @@ export default function DashboardPage() {
     accuracy: "0%"
   })
   const [recentActivity, setRecentActivity] = useState<any[]>([])
+  const [announcements, setAnnouncements] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -34,7 +35,7 @@ export default function DashboardPage() {
       const userId = session.user.id
 
       // 2. Get Solves & Score
-      const { data: solves, error } = await supabase
+      const { data: solves } = await supabase
         .from('solves')
         .select(`
           created_at,
@@ -47,6 +48,15 @@ export default function DashboardPage() {
         `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
+
+      // 3. Get Announcements
+      const { data: ann } = await supabase
+        .from('announcements')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5)
+      
+      if (ann) setAnnouncements(ann)
 
       if (solves) {
         // Calculate Total Score
@@ -155,16 +165,23 @@ export default function DashboardPage() {
 
           {/* Announcements / Info */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-foreground">Announcements</h2>
-            <div className="rounded-xl border border-white/10 bg-white/5 p-6 space-y-4">
-              <div className="border-l-2 border-primary pl-4">
-                <div className="font-medium text-foreground">CTF Started!</div>
-                <div className="text-sm text-muted-foreground mt-1">The competition has officially begun. Good luck!</div>
-              </div>
-              <div className="border-l-2 border-purple-500 pl-4">
-                <div className="font-medium text-foreground">New Challenge Added</div>
-                <div className="text-sm text-muted-foreground mt-1">Check out &quot;Crypto 2&quot; in the Crypto category.</div>
-              </div>
+            <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <Megaphone className="h-6 w-6 text-primary" />
+              Announcements
+            </h2>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-6 space-y-4 max-h-[400px] overflow-y-auto">
+              {announcements.length === 0 ? (
+                <div className="text-center text-muted-foreground py-4">No announcements yet.</div>
+              ) : (
+                announcements.map((a) => (
+                  <div key={a.id} className="border-l-2 border-primary pl-4 py-1">
+                    <div className="font-medium text-foreground">{a.content}</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {new Date(a.created_at).toLocaleDateString()} {new Date(a.created_at).toLocaleTimeString()}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
