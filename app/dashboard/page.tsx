@@ -8,6 +8,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
+import { getRankName } from "@/lib/rank"
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null)
@@ -68,14 +69,14 @@ export default function DashboardPage() {
         // Recent Activity (Top 5)
         setRecentActivity(solves.slice(0, 5))
 
-        // TODO: Calculate Rank (Complex query, requires comparing with all users)
-        // For now, we'll keep it simple or fetch from a leaderboard view if it exists.
+        // Calculate Rank
+        const rankInfo = getRankName(totalScore)
         
         setStats({
-          rank: "N/A", // Placeholder until we implement full leaderboard logic
+          rank: rankInfo.name,
           score: totalScore,
           solved: solvedCount,
-          accuracy: solvedCount > 0 ? "100%" : "0%" // Simplified accuracy
+          accuracy: solvedCount > 0 ? "100%" : "0%"
         })
       }
 

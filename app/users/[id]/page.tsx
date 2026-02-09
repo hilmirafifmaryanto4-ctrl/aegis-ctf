@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase"
 import { Navbar } from "@/components/layout/navbar"
 import { User, Trophy, Crosshair, Calendar, Flag, Activity } from "lucide-react"
 import { useParams } from "next/navigation"
+import { getRankName } from "@/lib/rank"
 import {
   LineChart,
   Line,
@@ -74,6 +75,7 @@ export default function UserProfilePage() {
         setChartData(timeline)
         setStats(prev => ({
           ...prev,
+          rank: getRankName(currentScore).name,
           score: currentScore,
           solves: userSolves.length
         }))

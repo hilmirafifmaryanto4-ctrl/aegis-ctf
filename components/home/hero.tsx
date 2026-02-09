@@ -56,8 +56,8 @@ export function Hero() {
             className="flex flex-col sm:flex-row gap-4 w-full justify-center"
           >
             <Link href="/register">
-              <Button size="lg" className="w-full sm:w-auto text-lg group">
-                <Terminal className="mr-2 h-5 w-5 group-hover:animate-pulse" />
+              <Button size="lg" className="w-full sm:w-auto text-lg group font-mono">
+                <span className="mr-2 text-primary-foreground/70">&gt;_</span>
                 Start Hacking
               </Button>
             </Link>
