@@ -5,7 +5,6 @@ import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Shield, Plus, Trash2, Users, List, Trophy, Upload, X, FileText } from "lucide-react"
 import { Navbar } from "@/components/layout/navbar"
-import { useDropzone } from "react-dropzone" // We'll implement a custom dropzone without extra deps to save time/errors
 
 export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false)
