@@ -10,6 +10,10 @@ import { User, Mail, Calendar, Shield, Trophy, Target, CheckCircle } from "lucid
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [isEditing, setIsEditing] = useState(false)
+  const [newUsername, setNewUsername] = useState("")
+  const [updateMessage, setUpdateMessage] = useState("")
+
   const [stats, setStats] = useState({
     rank: "N/A",
     score: 0,
@@ -26,6 +30,7 @@ export default function ProfilePage() {
         return
       }
       setUser(session.user)
+      setNewUsername(session.user.user_metadata?.username || "")
 
       // Fetch Stats
       const { data: solves } = await supabase
@@ -56,6 +61,31 @@ export default function ProfilePage() {
     getUser()
   }, [router])
 
+  const handleUpdateProfile = async () => {
+    if (!newUsername.trim()) return
+
+    const { error } = await supabase.auth.updateUser({
+      data: { username: newUsername }
+    })
+
+    // Also update public profile
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ username: newUsername })
+      .eq('id', user.id)
+
+    if (error || profileError) {
+      setUpdateMessage("Error updating profile")
+    } else {
+      setUpdateMessage("Profile updated successfully")
+      setIsEditing(false)
+      // Update local state
+      setUser({ ...user, user_metadata: { ...user.user_metadata, username: newUsername } })
+    }
+    
+    setTimeout(() => setUpdateMessage(""), 3000)
+  }
+
   if (loading) return <div className="min-h-screen bg-black pt-24 text-white text-center">Loading...</div>
 
   return (
@@ -71,7 +101,19 @@ export default function ProfilePage() {
               <User className="h-12 w-12 text-primary" />
             </div>
             <div className="text-center md:text-left space-y-2 flex-1">
-              <h1 className="text-3xl font-bold text-white">{user.user_metadata?.username || "Hacker"}</h1>
+              {isEditing ? (
+                <div className="space-y-2">
+                  <input
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value)}
+                    className="bg-black/20 border border-white/10 rounded px-3 py-1 text-white text-xl font-bold"
+                  />
+                  {updateMessage && <p className="text-sm text-green-500">{updateMessage}</p>}
+                </div>
+              ) : (
+                <h1 className="text-3xl font-bold text-white">{user.user_metadata?.username || "Hacker"}</h1>
+              )}
+              
               <div className="flex flex-col md:flex-row gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2 justify-center md:justify-start">
                   <Mail className="h-4 w-4" />
@@ -83,9 +125,23 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
-            <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">
-              Edit Profile
-            </Button>
+            
+            <div className="flex gap-2">
+              {isEditing ? (
+                <>
+                  <Button onClick={handleUpdateProfile} className="bg-primary text-black hover:bg-primary/90">
+                    Save
+                  </Button>
+                  <Button variant="ghost" onClick={() => setIsEditing(false)}>
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" onClick={() => setIsEditing(true)} className="border-primary/50 text-primary hover:bg-primary/10">
+                  Edit Profile
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 

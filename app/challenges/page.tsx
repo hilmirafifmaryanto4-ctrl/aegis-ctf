@@ -80,10 +80,26 @@ export default function ChallengesPage() {
             </div>
             <h1 className="text-4xl font-bold text-white">Challenges Locked</h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Ready to test your skills? We have a wide range of challenges including Web Exploitation, Cryptography, Reverse Engineering, and more.
+              Our challenges are designed to test your cybersecurity skills across various categories including Web Exploitation, Cryptography, Reverse Engineering, and more.
             </p>
-            <p className="text-muted-foreground">
-              Join Aegis CTF today to access all challenges and start earning points!
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left max-w-4xl mx-auto mt-8">
+              <div className="p-6 rounded-xl border border-white/10 bg-white/5">
+                <h3 className="text-lg font-bold text-primary mb-2">Learn & Practice</h3>
+                <p className="text-sm text-muted-foreground">From beginner to advanced levels, sharpen your skills with hands-on security challenges.</p>
+              </div>
+              <div className="p-6 rounded-xl border border-white/10 bg-white/5">
+                <h3 className="text-lg font-bold text-primary mb-2">Real-world Scenarios</h3>
+                <p className="text-sm text-muted-foreground">Face vulnerabilities found in modern applications and learn how to exploit and patch them.</p>
+              </div>
+              <div className="p-6 rounded-xl border border-white/10 bg-white/5">
+                <h3 className="text-lg font-bold text-primary mb-2">Earn Points</h3>
+                <p className="text-sm text-muted-foreground">Solve challenges to earn points, climb the leaderboard, and prove your expertise.</p>
+              </div>
+            </div>
+
+            <p className="text-muted-foreground pt-4">
+              Join Aegis CTF today to access all challenges and start your journey!
             </p>
             <div className="flex justify-center gap-4 pt-4">
               <Link href="/login">

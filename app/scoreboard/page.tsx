@@ -99,10 +99,26 @@ export default function ScoreboardPage() {
             </div>
             <h1 className="text-4xl font-bold text-white">Scoreboard Hidden</h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Compete with hackers from around the world. See who's leading the race to the top!
+              The battlefield where hackers prove their worth. See who dominates the leaderboard in real-time.
             </p>
-            <p className="text-muted-foreground">
-              Login to view the current standings and see where you rank.
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left max-w-4xl mx-auto mt-8">
+              <div className="p-6 rounded-xl border border-white/10 bg-white/5">
+                <h3 className="text-lg font-bold text-yellow-500 mb-2">Real-time Ranking</h3>
+                <p className="text-sm text-muted-foreground">Watch as the leaderboard updates instantly with every correct submission.</p>
+              </div>
+              <div className="p-6 rounded-xl border border-white/10 bg-white/5">
+                <h3 className="text-lg font-bold text-yellow-500 mb-2">Global Competition</h3>
+                <p className="text-sm text-muted-foreground">Compete against security enthusiasts and professionals from around the world.</p>
+              </div>
+              <div className="p-6 rounded-xl border border-white/10 bg-white/5">
+                <h3 className="text-lg font-bold text-yellow-500 mb-2">Rise to Glory</h3>
+                <p className="text-sm text-muted-foreground">Solve harder challenges to earn more points and secure your spot at the top.</p>
+              </div>
+            </div>
+
+            <p className="text-muted-foreground pt-4">
+              Login to view the current standings and see where you rank among the best.
             </p>
             <div className="flex justify-center gap-4 pt-4">
               <Link href="/login">
