@@ -46,9 +46,15 @@ export function LoginForm() {
       router.refresh()
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message)
+        if (err.message.includes("Email not confirmed")) {
+          setError("Email belum dikonfirmasi. Silakan cek inbox atau folder Spam email Anda.")
+        } else if (err.message.includes("Invalid login credentials")) {
+          setError("Email atau password salah.")
+        } else {
+          setError(err.message)
+        }
       } else {
-        setError("Failed to sign in")
+        setError("Gagal masuk. Silakan coba lagi.")
       }
     } finally {
       setIsLoading(false)

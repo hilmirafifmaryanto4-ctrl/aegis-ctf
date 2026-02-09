@@ -1,10 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, X, Shield } from "lucide-react"
+import { Menu, X, Shield, LogOut, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { supabase } from "@/lib/supabase"
+import { useRouter } from "next/navigation"
 
 const navItems = [
   { name: "Home", href: "/" },
@@ -15,6 +17,30 @@ const navItems = [
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const router = useRouter()
+
+  useEffect(() => {
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+    })
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push("/login")
+    router.refresh()
+  }
 
   return (
     <nav className="fixed top-0 z-50 w-full border-b border-white/10 bg-background/80 backdrop-blur-md">
@@ -40,12 +66,29 @@ export function Navbar() {
             </Link>
           ))}
           <div className="flex items-center gap-4 ml-4">
-            <Link href="/login">
-              <Button variant="ghost" size="sm">Login</Button>
-            </Link>
-            <Link href="/register">
-              <Button variant="primary" size="sm">Register</Button>
-            </Link>
+            {user ? (
+              <div className="flex items-center gap-4">
+                 <Link href="/dashboard">
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <User className="h-4 w-4" />
+                    Dashboard
+                  </Button>
+                </Link>
+                <Button variant="outline" size="sm" onClick={handleSignOut} className="gap-2 border-red-500/50 text-red-500 hover:bg-red-500/10 hover:text-red-400">
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost" size="sm">Login</Button>
+                </Link>
+                <Link href="/register">
+                  <Button variant="primary" size="sm">Register</Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
@@ -79,12 +122,36 @@ export function Navbar() {
                 </Link>
               ))}
               <div className="flex flex-col gap-2 pt-4 border-t border-white/10">
-                <Link href="/login" onClick={() => setIsOpen(false)}>
-                  <Button variant="ghost" className="w-full justify-start">Login</Button>
-                </Link>
-                <Link href="/register" onClick={() => setIsOpen(false)}>
-                  <Button variant="primary" className="w-full">Register</Button>
-                </Link>
+                {user ? (
+                  <>
+                    <Link href="/dashboard" onClick={() => setIsOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start gap-2">
+                        <User className="h-4 w-4" />
+                        Dashboard
+                      </Button>
+                    </Link>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        handleSignOut()
+                        setIsOpen(false)
+                      }}
+                      className="w-full justify-start gap-2 border-red-500/50 text-red-500 hover:bg-red-500/10 hover:text-red-400"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login" onClick={() => setIsOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start">Login</Button>
+                    </Link>
+                    <Link href="/register" onClick={() => setIsOpen(false)}>
+                      <Button variant="primary" className="w-full">Register</Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>

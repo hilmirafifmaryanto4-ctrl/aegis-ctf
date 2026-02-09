@@ -51,11 +51,13 @@ export function RegisterForm() {
 
       if (authError) throw authError
 
-      if (authData.user) {
-        // 2. Create profile in 'users' table (Handled by Trigger usually, but explicit check is good)
-        // Since we added a trigger in schema.sql, we can just rely on that or handle it here if trigger fails.
-        // For now, let's assume the trigger works or we will redirect to login.
-        router.push("/login?message=Check your email to confirm your account")
+      if (authData.session) {
+        // User is logged in automatically (Email confirmation disabled)
+        router.push("/dashboard")
+        router.refresh()
+      } else if (authData.user) {
+        // User created but not logged in (Email confirmation enabled)
+        router.push("/login?message=Cek email Anda untuk verifikasi akun (Cek folder Spam jika tidak ada)")
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
