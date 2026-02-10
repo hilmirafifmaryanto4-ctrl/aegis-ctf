@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase"
-import { Navbar } from "@/components/layout/navbar"
+import { supabase } from "../../lib/supabase"
+import { Navbar } from "../../components/layout/navbar"
 import { Megaphone, Bell, Info } from "lucide-react"
 
 export default function NotificationsPage() {

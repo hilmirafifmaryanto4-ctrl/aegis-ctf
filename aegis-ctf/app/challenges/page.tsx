@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase"
-import { Navbar } from "@/components/layout/navbar"
-import { Button } from "@/components/ui/button"
+import { supabase } from "../../lib/supabase"
+import { Navbar } from "../../components/layout/navbar"
+import { Button } from "../../components/ui/button"
 import { Flag, X, CheckCircle, XCircle, Lock, Lightbulb, Unlock, Users } from "lucide-react"
 import Link from "next/link"
 

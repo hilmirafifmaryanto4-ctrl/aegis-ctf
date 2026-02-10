@@ -1,7 +1,7 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Navbar } from "@/components/layout/navbar"
+import { Button } from "../../components/ui/button"
+import { Navbar } from "../../components/layout/navbar"
 import { useState } from "react"
 
 export default function ContactPage() {

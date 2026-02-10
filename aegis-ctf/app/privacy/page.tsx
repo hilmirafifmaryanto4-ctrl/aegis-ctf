@@ -1,6 +1,6 @@
 "use client"
 
-import { Navbar } from "@/components/layout/navbar"
+import { Navbar } from "../../components/layout/navbar"
 import { Shield } from "lucide-react"
 
 export default function PrivacyPage() {

@@ -1,6 +1,6 @@
 "use client"
 
-import { Navbar } from "@/components/layout/navbar"
+import { Navbar } from "../../components/layout/navbar"
 import { HelpCircle, ChevronDown, ChevronUp } from "lucide-react"
 import { useState } from "react"
 

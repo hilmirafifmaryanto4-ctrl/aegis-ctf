@@ -1,11 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase"
-import { Navbar } from "@/components/layout/navbar"
+import { supabase } from "../../../lib/supabase"
+import { Navbar } from "../../../components/layout/navbar"
 import { User, Trophy, Crosshair, Calendar, Flag, Activity } from "lucide-react"
 import { useParams } from "next/navigation"
-import { getRankName } from "@/lib/rank"
+import { getRankName } from "../../../lib/rank"
 import {
   LineChart,
   Line,

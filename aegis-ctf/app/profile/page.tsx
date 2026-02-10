@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabase"
-import { Navbar } from "@/components/layout/navbar"
-import { Button } from "@/components/ui/button"
+import { supabase } from "../../lib/supabase"
+import { Navbar } from "../../components/layout/navbar"
+import { Button } from "../../components/ui/button"
 import Link from "next/link"
 import { User, Mail, Calendar, Shield, Trophy, Target, CheckCircle, Settings, ExternalLink } from "lucide-react"
 

@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { supabase } from "@/lib/supabase"
-import { Button } from "@/components/ui/button"
+import { supabase } from "../../lib/supabase"
+import { Button } from "../../components/ui/button"
 import { Shield, Plus, Trash2, Users, List, Trophy, Upload, X, FileText, Megaphone, Lightbulb, Activity, Eye, EyeOff, Flag } from "lucide-react"
-import { Navbar } from "@/components/layout/navbar"
+import { Navbar } from "../../components/layout/navbar"
 
 export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false)

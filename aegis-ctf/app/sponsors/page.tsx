@@ -1,6 +1,6 @@
 "use client"
 
-import { Navbar } from "@/components/layout/navbar"
+import { Navbar } from "../../components/layout/navbar"
 import { Heart, Globe, Twitter, Github } from "lucide-react"
 import Link from "next/link"
 

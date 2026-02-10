@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase"
-import { Navbar } from "@/components/layout/navbar"
+import { supabase } from "../../lib/supabase"
+import { Navbar } from "../../components/layout/navbar"
 import { Settings, User, Lock, Save, Github, Twitter, Globe } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button } from "../../components/ui/button"
 import { useRouter } from "next/navigation"
 
 export default function SettingsPage() {

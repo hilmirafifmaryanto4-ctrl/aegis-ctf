@@ -1,6 +1,6 @@
 "use client"
 
-import { Navbar } from "@/components/layout/navbar"
+import { Navbar } from "../../components/layout/navbar"
 import { FileText } from "lucide-react"
 
 export default function TermsPage() {

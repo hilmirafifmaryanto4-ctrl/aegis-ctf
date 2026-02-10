@@ -1,14 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Navbar } from "@/components/layout/navbar"
+import { Navbar } from "../../components/layout/navbar"
 import { motion } from "framer-motion"
 import { Activity, Award, CheckCircle, Crosshair, Megaphone } from "lucide-react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { supabase } from "@/lib/supabase"
+import { Button } from "../../components/ui/button"
+import { supabase } from "../../lib/supabase"
 import { useRouter } from "next/navigation"
-import { getRankName } from "@/lib/rank"
+import { getRankName } from "../../lib/rank"
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null)

@@ -1,6 +1,6 @@
 "use client"
 
-import { Navbar } from "@/components/layout/navbar"
+import { Navbar } from "../../components/layout/navbar"
 import { Trophy, Gift, Award, Star } from "lucide-react"
 
 export default function PrizesPage() {

@@ -1,6 +1,6 @@
 "use client"
 
-import { Navbar } from "@/components/layout/navbar"
+import { Navbar } from "../../components/layout/navbar"
 import { Shield, AlertTriangle, Check, XCircle } from "lucide-react"
 
 export default function RulesPage() {
